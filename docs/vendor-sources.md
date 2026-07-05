@@ -17,6 +17,10 @@ Pinned versions and their download URLs:
 To update: re-download the file(s) into `vendor/`, bump the version here, then
 run `./build.sh` and `./test/smoke.sh`.
 
+Full license texts + copyright notices for every file above are aggregated in
+[`THIRD-PARTY-LICENSES.md`](../THIRD-PARTY-LICENSES.md) at the repo root —
+keep that file in sync when a version bumps or a new vendored file is added.
+
 ## Web-app fonts (`web/fonts/`)
 
 Self-hosted woff2 (latin subset) from `@fontsource`, used only by the web app's
@@ -28,3 +32,7 @@ theme system. Fetched 2026-07-05 from `@fontsource/<pkg>@5` (latest v5).
 | IBM Plex Sans | 400, 500, 700 | `@fontsource/ibm-plex-sans@5/files/ibm-plex-sans-latin-<w>-normal.woff2` |
 
 To update: re-download into `web/fonts/`, then `./build.sh` + `./test/web-smoke.sh`.
+
+Full OFL-1.1 license text ships alongside the font files at
+[`web/fonts/OFL.txt`](../web/fonts/OFL.txt), per the license's bundling
+requirement.
