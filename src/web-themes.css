@@ -1,0 +1,63 @@
+/* Theme token system (web app only).
+   [data-theme] selects fonts + border weight; [data-theme][data-mode] selects
+   the colour palette. Adding a theme = one font block + two colour blocks +
+   one nav swatch (in web-body.html) — nothing else. */
+
+/* ─── Fonts + structural tokens per theme ───────────────────── */
+:root[data-theme="minimalist"] {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: var(--font-sans);
+  --bw: 1px;
+  --display-weight: 600;
+  --display-spacing: -0.01em;
+  --display-transform: none;
+}
+:root[data-theme="swiss"] {
+  --font-sans: "IBM Plex Sans", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-display: "IBM Plex Sans", Helvetica, Arial, sans-serif;
+  --bw: 1px;
+  --display-weight: 700;
+  --display-spacing: -0.02em;
+  --display-transform: none;
+}
+:root[data-theme="brutalist"] {
+  --font-sans: "Space Mono", ui-monospace, Menlo, monospace;
+  --font-mono: "Space Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Bebas Neue", Impact, Haettenschweiler, sans-serif;
+  --bw: 3px;
+  --display-weight: 400;
+  --display-spacing: 0.02em;
+  --display-transform: uppercase;
+}
+
+/* ─── Minimalist — black / white / grey only ────────────────── */
+:root[data-theme="minimalist"][data-mode="light"] {
+  --bg: #ffffff; --fg: #1a1a1a; --surface: #f5f5f5; --sfg: #1a1a1a;
+  --muted: #8a8a8a; --line: #e2e2e2; --accent: #4a4a4a; --punch: #6a6a6a;
+}
+:root[data-theme="minimalist"][data-mode="dark"] {
+  --bg: #0d0d0d; --fg: #e8e8e8; --surface: #1a1a1a; --sfg: #e8e8e8;
+  --muted: #777777; --line: #2c2c2c; --accent: #b0b0b0; --punch: #9a9a9a;
+}
+
+/* ─── Swiss Grid — IBM Plex, red accent, hairlines ──────────── */
+:root[data-theme="swiss"][data-mode="light"] {
+  --bg: #ffffff; --fg: #141414; --surface: #f2f2f2; --sfg: #141414;
+  --muted: #909090; --line: rgba(0,0,0,0.12); --accent: #cc0000; --punch: #141414;
+}
+:root[data-theme="swiss"][data-mode="dark"] {
+  --bg: #080808; --fg: #f0f0f0; --surface: #141414; --sfg: #f0f0f0;
+  --muted: #606060; --line: rgba(240,240,240,0.10); --accent: #ff2800; --punch: #f0f0f0;
+}
+
+/* ─── Brutalist — Bebas + Space Mono, heavy borders, punch ──── */
+:root[data-theme="brutalist"][data-mode="light"] {
+  --bg: #f5f0e8; --fg: #0c0c0b; --surface: #0c0c0b; --sfg: #f5f0e8;
+  --muted: #8a8577; --line: #0c0c0b; --accent: #e8240a; --punch: #c9a800;
+}
+:root[data-theme="brutalist"][data-mode="dark"] {
+  --bg: #0d0d0d; --fg: #d4cfc3; --surface: #141414; --sfg: #d4cfc3;
+  --muted: #7d7869; --line: #d4cfc3; --accent: #ff2d00; --punch: #00ff87;
+}
