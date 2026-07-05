@@ -1,34 +1,40 @@
-/* md-viewer web app — interactive browser viewer.
-   Load a .md via file picker, drag-and-drop, or paste, then show the split view
-   (rendered left, syntax-highlighted source right). Fully client-side. */
+/* md-viewer web app — theme system, README default, open/paste/drop, responsive.
+   Placeholder __README_B64__ is replaced with the repo README at build time. */
 (function () {
-  var empty = document.getElementById("empty");
+  var README_B64 = "__README_B64__";
+
   var split = document.getElementById("split");
   var rendered = document.getElementById("rendered");
   var codeEl = document.getElementById("rawcode");
   var filename = document.getElementById("filename");
   var overlay = document.getElementById("dropOverlay");
+  var fileInput = document.getElementById("file");
+  var root = document.documentElement;
 
   if (window.marked) marked.setOptions({ gfm: true, breaks: false });
 
+  function b64ToUtf8(b64) {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+
+  var README = b64ToUtf8(README_B64);
+
+  // ─── Rendering ─────────────────────────────────────────────
   function render(md, name) {
     filename.textContent = name || "Markdown";
     document.title = (name ? name + " — " : "") + "Markdown Viewer";
-
-    // Left: rendered + sanitized.
     var html = window.marked ? marked.parse(md) : md;
     if (window.DOMPurify) html = DOMPurify.sanitize(html);
     rendered.innerHTML = html;
-
-    // Right: syntax-highlighted source (hljs.highlight escapes HTML → safe).
     if (window.hljs) {
       codeEl.innerHTML = hljs.highlight(md, { language: "markdown" }).value;
     } else {
       codeEl.textContent = md;
     }
-
-    empty.hidden = true;
-    split.hidden = false;
+    split.scrollTop = 0;
   }
 
   function openFile(file) {
@@ -38,118 +44,107 @@
     reader.readAsText(file, "utf-8");
   }
 
-  // Open dialog. Prefer the File System Access API so the picker can default to
-  // the Downloads folder and remember the last-used folder (via the stable `id`,
-  // persisted by the browser across sessions). Falls back to a plain <input>
-  // where the API is unavailable (Firefox, Safari).
-  var fileInput = document.getElementById("file");
-
+  // ─── Open dialog (Downloads default + remembered folder) ────
   async function openViaDialog() {
     if (window.showOpenFilePicker) {
       try {
         var handles = await window.showOpenFilePicker({
-          id: "md-viewer",          // browser remembers the last folder per id
-          startIn: "downloads",     // default on first use, before a folder is remembered
-          multiple: false,
-          types: [{
-            description: "Markdown",
-            accept: {
-              "text/markdown": [".md", ".markdown", ".mdown", ".mkd", ".mdx"],
-              "text/plain": [".txt"]
-            }
-          }]
+          id: "md-viewer", startIn: "downloads", multiple: false,
+          types: [{ description: "Markdown", accept: {
+            "text/markdown": [".md", ".markdown", ".mdown", ".mkd", ".mdx"],
+            "text/plain": [".txt"]
+          } }]
         });
-        var file = await handles[0].getFile();
-        openFile(file);
+        openFile(await handles[0].getFile());
       } catch (err) {
-        // AbortError = user cancelled the dialog; ignore. Anything else: fall back.
         if (err && err.name !== "AbortError") fileInput.click();
       }
     } else {
       fileInput.click();
     }
   }
-
   document.getElementById("open").addEventListener("click", openViaDialog);
-  document.getElementById("openEmpty").addEventListener("click", openViaDialog);
-
   fileInput.addEventListener("change", function (e) {
     if (e.target.files && e.target.files[0]) openFile(e.target.files[0]);
   });
 
-  // Drag and drop (anywhere on the window)
-  var dragDepth = 0;
-  window.addEventListener("dragenter", function (e) {
-    e.preventDefault(); dragDepth++; overlay.classList.add("active");
-  });
-  window.addEventListener("dragover", function (e) { e.preventDefault(); });
-  window.addEventListener("dragleave", function (e) {
-    e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; overlay.classList.remove("active"); }
-  });
-  window.addEventListener("drop", function (e) {
-    e.preventDefault(); dragDepth = 0; overlay.classList.remove("active");
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-      openFile(e.dataTransfer.files[0]);
-    }
+  // readme.md button + default document
+  document.getElementById("readme").addEventListener("click", function () {
+    render(README, "README.md");
   });
 
-  // Paste markdown text
+  // ─── Drag & drop ───────────────────────────────────────────
+  var dragDepth = 0;
+  window.addEventListener("dragenter", function (e) { e.preventDefault(); dragDepth++; overlay.classList.add("active"); });
+  window.addEventListener("dragover", function (e) { e.preventDefault(); });
+  window.addEventListener("dragleave", function (e) { e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; overlay.classList.remove("active"); } });
+  window.addEventListener("drop", function (e) {
+    e.preventDefault(); dragDepth = 0; overlay.classList.remove("active");
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) openFile(e.dataTransfer.files[0]);
+  });
+
+  // ─── Paste ─────────────────────────────────────────────────
   window.addEventListener("paste", function (e) {
     var text = e.clipboardData && e.clipboardData.getData("text/plain");
     if (text && text.trim()) { render(text, "Pasted.md"); e.preventDefault(); }
   });
 
-  // Sample button
-  document.getElementById("sample").addEventListener("click", function () {
-    render(SAMPLE_MD, "sample.md");
+  // ─── Theme + light/dark ────────────────────────────────────
+  var THEMES = ["minimalist", "swiss", "brutalist"];
+  var swatches = Array.prototype.slice.call(document.querySelectorAll(".tsw"));
+  var modeBtn = document.getElementById("mode");
+  var modeIcon = modeBtn.querySelector(".mode-icon");
+  var modeLabel = modeBtn.querySelector(".mode-label");
+
+  function applyTheme(t) {
+    if (THEMES.indexOf(t) < 0) t = "swiss";
+    root.setAttribute("data-theme", t);
+    try { localStorage.setItem("mdv-theme", t); } catch (e) {}
+    swatches.forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-theme") === t); });
+  }
+  function applyMode(m) {
+    if (m !== "light" && m !== "dark") m = "light";
+    root.setAttribute("data-mode", m);
+    try { localStorage.setItem("mdv-mode", m); } catch (e) {}
+    modeIcon.textContent = m === "dark" ? "☾" : "☀";
+    modeLabel.textContent = m === "dark" ? "Dark" : "Light";
+  }
+  // Sync UI to the attributes the no-FOUC head script already set.
+  applyTheme(root.getAttribute("data-theme") || "swiss");
+  applyMode(root.getAttribute("data-mode") || "light");
+
+  swatches.forEach(function (b) {
+    b.addEventListener("click", function () { applyTheme(b.getAttribute("data-theme")); });
+  });
+  modeBtn.addEventListener("click", function () {
+    applyMode(root.getAttribute("data-mode") === "dark" ? "light" : "dark");
   });
 
-  // Draggable divider
+  // ─── Draggable divider (axis-aware: horizontal desktop, vertical mobile) ──
   var divider = document.getElementById("divider");
   var left = document.querySelector(".pane.left");
+  var mq = window.matchMedia("(max-width: 640px)");
   var dragging = false;
-  divider.addEventListener("mousedown", function (e) {
-    dragging = true; document.body.style.cursor = "col-resize"; e.preventDefault();
+
+  divider.addEventListener("pointerdown", function (e) {
+    dragging = true; divider.setPointerCapture(e.pointerId);
+    document.body.style.cursor = mq.matches ? "row-resize" : "col-resize";
+    e.preventDefault();
   });
-  window.addEventListener("mousemove", function (e) {
+  divider.addEventListener("pointermove", function (e) {
     if (!dragging) return;
     var rect = split.getBoundingClientRect();
-    var pct = ((e.clientX - rect.left) / rect.width) * 100;
+    var pct = mq.matches
+      ? ((e.clientY - rect.top) / rect.height) * 100
+      : ((e.clientX - rect.left) / rect.width) * 100;
     pct = Math.max(15, Math.min(85, pct));
     left.style.flex = "0 0 " + pct + "%";
   });
-  window.addEventListener("mouseup", function () {
+  divider.addEventListener("pointerup", function (e) {
     dragging = false; document.body.style.cursor = "";
+    try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
   });
 
-  var SAMPLE_MD = [
-    "# Markdown Viewer",
-    "",
-    "A **fast** way to read `.md` files — rendered on the left, *raw source* on the right.",
-    "",
-    "## Features",
-    "",
-    "- Drag & drop a file",
-    "- Paste Markdown with ⌘V",
-    "  - Nested bullets work too",
-    "- Syntax-highlighted source",
-    "",
-    "1. Rendered view",
-    "2. Raw view",
-    "",
-    "> Everything runs in your browser — nothing is uploaded.",
-    "",
-    "```js",
-    "const greet = (name) => `Hello, ${name}!`;",
-    "console.log(greet('Markdown'));",
-    "```",
-    "",
-    "| Pane | Content |",
-    "|------|---------|",
-    "| Left | Rendered |",
-    "| Right | Source |",
-    "",
-    "[Back to neckarshore.ai](https://neckarshore.ai) · Ümlauts & emoji 🚀 render fine.",
-    ""
-  ].join("\n");
+  // ─── Initial document = repo README ────────────────────────
+  render(README, "README.md");
 })();
