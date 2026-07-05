@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# mdview — render a Markdown file into the self-contained viewer and open it
+# in the default browser. Split view: rendered (left) + raw MD (right).
+#
+# Usage: mdview <file.md>
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TEMPLATE="$ROOT/viewer.html"
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ] || [ $# -lt 1 ]; then
+  echo "Usage: mdview <file.md>" >&2
+  exit 2
+fi
+
+file="$1"
+if [ ! -f "$file" ]; then
+  echo "mdview: file not found: $file" >&2
+  exit 1
+fi
+if [ ! -f "$TEMPLATE" ]; then
+  echo "mdview: viewer.html missing — run build.sh first ($TEMPLATE)" >&2
+  exit 1
+fi
+
+# base64-encode payload + filename so no character can break the HTML/JS.
+md_b64="$(base64 < "$file" | tr -d '\n')"
+name_b64="$(printf '%s' "$(basename "$file")" | base64 | tr -d '\n')"
+
+# Output into a temp dir, filename-based so the browser tab reads nicely.
+tmpdir="$(mktemp -d -t mdview)"
+out="$tmpdir/$(basename "$file").html"
+
+# Replace both placeholders. base64 output never contains '&' or '\', so awk's
+# gsub replacement string is safe from special-character interpretation.
+awk -v md="$md_b64" -v nm="$name_b64" '
+  { gsub(/__MD_BASE64__/, md); gsub(/__MD_FILENAME_B64__/, nm); print }
+' "$TEMPLATE" > "$out"
+
+# MDVIEW_NO_OPEN=1 skips launching the browser (used by tests / scripting) and
+# prints the generated path instead.
+if [ "${MDVIEW_NO_OPEN:-}" = "1" ]; then
+  echo "$out"
+else
+  open "$out"
+fi

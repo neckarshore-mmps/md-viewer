@@ -1,0 +1,86 @@
+# md-viewer
+
+A no-dependency Markdown viewer for macOS Finder. Right-click a `.md` file →
+**Quick Actions → View Markdown** → it opens in your default browser as a
+**split view**: the rendered document on the left, the raw Markdown with syntax
+highlighting on the right.
+
+Built for reading Markdown quickly without opening VS Code — sometimes the
+formatted view is clearer, sometimes the source is, so you get both at once.
+
+## Features
+
+1. **Split view, always** — rendered (left) and raw source (right) side by side.
+2. **Syntax highlighting on the raw side** — headings, bullets, bold, links and
+   code fences are colour-coded so structure is visible in the source too.
+3. **Auto light/dark** — follows the macOS appearance setting.
+4. **Self-contained & offline** — the viewer is a single HTML file with all CSS
+   and JS inlined. No internet, no npm, no runtime dependencies.
+5. **Draggable divider** — drag the middle bar to rebalance the two panes.
+6. **Safe** — rendered HTML is sanitized with DOMPurify, so a downloaded `.md`
+   containing scripts cannot run code.
+
+## Install
+
+```bash
+git clone https://github.com/neckarshore-mmps/md-viewer.git
+cd md-viewer
+./install.sh
+```
+
+`install.sh` builds `viewer.html`, copies the Quick Action into
+`~/Library/Services/`, wires in the absolute path to `bin/mdview`, validates the
+plists, and refreshes the Services cache.
+
+Then right-click any `.md` file in Finder → **Quick Actions → View Markdown**.
+If it does not appear, enable it under **System Settings → Keyboard → Keyboard
+Shortcuts → Services → Files and Folders → View Markdown**.
+
+## Usage
+
+- **From Finder:** right-click a `.md` → Quick Actions → View Markdown.
+- **From the terminal:** `bin/mdview path/to/file.md`
+
+## How it works
+
+| Piece | Role |
+|-------|------|
+| `bin/mdview` | Base64-encodes the file contents + name (so no character can break the HTML), injects them into `viewer.html`, writes a temp file, and `open`s it. |
+| `viewer.html` | Self-contained template built by `build.sh`. Decodes the payload in-browser, renders the left pane with `marked` + `DOMPurify`, highlights the right pane with `highlight.js`. |
+| `quick-action/View Markdown.workflow` | Automator Quick Action that runs `mdview` on the selected file(s). Installed into `~/Library/Services/`. |
+
+## Rebuilding after edits
+
+The committed `viewer.html` is generated. After editing anything in `src/` or
+updating a vendored library in `vendor/`, rebuild it:
+
+```bash
+./build.sh
+```
+
+## Updating vendored libraries
+
+Pinned versions live in `vendor/` (see `docs/vendor-sources.md` for the exact
+URLs and versions). Re-download, then `./build.sh`.
+
+## Testing
+
+```bash
+./test/smoke.sh
+```
+
+End-to-end smoke test: builds the viewer, runs `mdview` on a fixture, and asserts
+the output is well-formed (placeholders resolved, payload embedded, libraries
+inlined, missing-file rejected).
+
+## Uninstall
+
+```bash
+./uninstall.sh
+```
+
+## Backlog (deliberately not in v1)
+
+1. Synchronized scrolling between the two panes.
+2. Configurable / switchable themes beyond auto light/dark.
+3. Mermaid diagram and LaTeX math rendering.

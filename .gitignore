@@ -1,0 +1,3 @@
+# Generated / transient
+test/_*.html
+.DS_Store
