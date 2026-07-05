@@ -47,6 +47,21 @@ Both entry points feed the exact same in-browser rendering pipeline.
 4. **No build chain** — a pure Bash generator (`build.sh`, `bin/mdview`) assembles
    both outputs. Text in, text out — reviewable and diff-able.
 
+## 4. Fastest access from Finder
+
+md-viewer is a **Quick Action, not an app** — double-click / Enter opens your
+default editor (TextEdit / VS Code), **not** the viewer. Use one of these,
+fastest first:
+
+1. **Keyboard shortcut (recommended — one keystroke).** Select the `.md` → press
+   the shortcut → open. Set it up once: **System Settings → Keyboard → Keyboard
+   Shortcuts… → Services → "Files and Folders" → View Markdown** → assign e.g.
+   `⌃⌘M`.
+2. **Finder preview pane (no submenus).** Show the preview pane (`⌘⇧P`), select the
+   file → the Quick Action buttons appear at the bottom → click **View Markdown**.
+3. **Right-click.** Right-click the `.md` → **Quick Actions → View Markdown**. One
+   submenu deep.
+
 ## Built with
 
 `marked` · `DOMPurify` · `highlight.js` · IBM Plex · Bash / Automator · Vercel ·
