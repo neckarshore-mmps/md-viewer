@@ -33,6 +33,10 @@ grep -q '<title>Markdown Viewer' "$OUT" && pass "descriptive web title" || die "
 [ -f "$ROOT/web/robots.txt" ] && pass "robots.txt present" || die "robots.txt missing"
 [ -f "$ROOT/web/sitemap.xml" ] && pass "sitemap.xml present" || die "sitemap.xml missing"
 
+# How-it-works page + nav link.
+[ -f "$ROOT/web/how-it-works.html" ] && pass "how-it-works page present" || die "how-it-works.html missing"
+grep -q 'href="/how-it-works"' "$OUT" && pass "how-it-works nav link" || die "how-it-works nav link missing"
+
 # README embedded (base64 prefix of README.md must appear; no leftover placeholder).
 grep -qF "$(base64 < "$ROOT/README.md" | tr -d '\n' | cut -c1-40)" "$OUT" && pass "README payload embedded" || die "README not embedded"
 grep -q "__README_B64__" "$OUT" && die "unresolved __README_B64__ placeholder" || pass "README placeholder resolved"

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How md-viewer works</title>
+<meta name="description" content="How md-viewer turns a Markdown file into a scroll-synced split view: base64 → inject → marked + DOMPurify (rendered) and highlight.js (source). Offline, safe, token-themed.">
+<link rel="canonical" href="https://md.neckarshore.ai/how-it-works">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%84%3C/text%3E%3C/svg%3E">
+<script>
+/* Match the viewer's remembered light/dark choice; else follow the system. */
+(function () {
+  var m = localStorage.getItem("mdv-mode");
+  if (m !== "light" && m !== "dark") {
+    m = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  document.documentElement.setAttribute("data-theme", m);
+})();
+</script>
+<style>
+  :root {
+    --bg: #fbfbfa; --panel: #f2f2f0; --ink: #141414; --muted: #7a7a76;
+    --line: rgba(20,20,20,0.14); --accent: #cc0000; --ok: #1f7a4d;
+    --sans: ui-sans-serif, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0b0b0b; --panel: #151515; --ink: #f0f0f0; --muted: #7d7d78;
+      --line: rgba(240,240,240,0.12); --accent: #ff2f13; --ok: #4fd08a; }
+  }
+  :root[data-theme="light"] { --bg: #fbfbfa; --panel: #f2f2f0; --ink: #141414; --muted: #7a7a76;
+    --line: rgba(20,20,20,0.14); --accent: #cc0000; --ok: #1f7a4d; }
+  :root[data-theme="dark"] { --bg: #0b0b0b; --panel: #151515; --ink: #f0f0f0; --muted: #7d7d78;
+    --line: rgba(240,240,240,0.12); --accent: #ff2f13; --ok: #4fd08a; }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  .doc {
+    background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.55;
+    -webkit-font-smoothing: antialiased; max-width: 1080px; margin: 0 auto;
+    border-left: 1px solid var(--line); border-right: 1px solid var(--line); min-height: 100vh;
+  }
+  .mono { font-family: var(--mono); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  a { color: var(--accent); }
+
+  /* Top bar */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 40px; border-bottom: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
+  }
+  .topbar a { text-decoration: none; color: var(--ink); }
+  .topbar a:hover { color: var(--accent); }
+  .topbar .home { font-weight: 700; }
+
+  header { padding: 34px 40px 26px; border-bottom: 1px solid var(--line); }
+  .topline { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  .topline .idx { color: var(--accent); font-weight: 700; }
+  h1 { font-size: clamp(30px, 5.2vw, 52px); line-height: 1.02; letter-spacing: -0.02em;
+    margin: 18px 0 12px; font-weight: 800; text-wrap: balance; max-width: 16ch; }
+  h1 em { color: var(--accent); font-style: normal; }
+  .lede { font-size: 17px; color: var(--muted); max-width: 62ch; margin: 0; }
+
+  section { padding: 30px 40px; border-bottom: 1px solid var(--line); }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 22px; }
+  .sec-head .num { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent);
+    border-right: 1px solid var(--line); padding-right: 14px; letter-spacing: 0.08em; }
+  .sec-head h2 { font-size: 18px; margin: 0; letter-spacing: -0.01em; font-weight: 700; }
+
+  .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .lane { background: var(--panel); border: 1px solid var(--line); padding: 20px; }
+  .lane h3 { margin: 0 0 4px; font-size: 15px; display: flex; align-items: center; gap: 10px; }
+  .lane h3 .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--bg); background: var(--accent); padding: 3px 7px; }
+  .lane p { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); }
+  .steps { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .steps li { font-family: var(--mono); font-size: 12.5px; display: flex; gap: 10px; align-items: baseline; }
+  .steps li b { color: var(--accent); font-weight: 700; min-width: 14px; }
+
+  .flow { display: flex; flex-direction: column; gap: 0; }
+  .node { border: 1px solid var(--line); background: var(--panel); padding: 14px 18px; }
+  .node .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .node .v { font-size: 15px; font-weight: 700; margin-top: 3px; }
+  .node .d { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .arrow { text-align: center; color: var(--accent); font-size: 18px; line-height: 1; padding: 7px 0; }
+  .split-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .split-row .node { border-top-width: 3px; border-top-color: var(--accent); }
+  .pane-k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  .chain { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chain span { font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--line); padding: 3px 8px; white-space: nowrap; }
+  .chain .safe { border-color: var(--ok); color: var(--ok); }
+
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .card { border: 1px solid var(--line); padding: 18px; }
+  .card h4 { margin: 0 0 6px; font-size: 14.5px; display: flex; align-items: center; gap: 9px; }
+  .card h4 .dot { width: 8px; height: 8px; background: var(--accent); flex: none; }
+  .card p { margin: 0; font-size: 13px; color: var(--muted); }
+  .card code { font-family: var(--mono); font-size: 12px; color: var(--ink); background: var(--panel); padding: 1px 5px; }
+
+  footer { padding: 24px 40px 40px; }
+  .cta {
+    display: inline-block; margin-bottom: 20px; font-family: var(--mono); font-size: 13px;
+    text-decoration: none; color: var(--bg); background: var(--accent); padding: 10px 16px; letter-spacing: 0.04em;
+  }
+  .foot-note { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .stack { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .stack span { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; border: 1px solid var(--line); padding: 5px 10px; color: var(--muted); }
+
+  code { font-family: var(--mono); }
+  a:focus-visible, .cta:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (max-width: 720px) {
+    .topbar, header, section, footer { padding-left: 22px; padding-right: 22px; }
+    .lanes, .cards, .split-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+  <div class="topbar">
+    <a class="home" href="/">← md-viewer</a>
+    <a href="/">Open the viewer</a>
+  </div>
+
+  <header>
+    <div class="topline">
+      <span class="eyebrow"><span class="idx">001</span> &nbsp; md-viewer · how it works</span>
+      <span class="eyebrow">grid</span>
+    </div>
+    <h1>How a Markdown file becomes a <em>split view</em></h1>
+    <p class="lede">One file, one pipeline, zero servers. The same base64-injected,
+    self-contained HTML powers both the macOS Finder Quick Action and this web app —
+    rendered document on the left, syntax-highlighted source on the right.</p>
+  </header>
+
+  <section>
+    <div class="sec-head"><span class="num">01</span><h2>Two ways in, one engine</h2></div>
+    <div class="lanes">
+      <div class="lane">
+        <h3>Finder Quick Action <span class="tag">macOS</span></h3>
+        <p>Right-click any <code>.md</code> in Finder — no app to launch.</p>
+        <ul class="steps">
+          <li><b>1</b><span>Right-click → <code>Quick Actions → View Markdown</code></span></li>
+          <li><b>2</b><span>Automator service runs <code>mdview "$file"</code></span></li>
+          <li><b>3</b><span>Bash generates a temp HTML and <code>open</code>s it</span></li>
+        </ul>
+      </div>
+      <div class="lane">
+        <h3>Web app <span class="tag">browser</span></h3>
+        <p>Drop, paste, or open a file right here. Fully client-side.</p>
+        <ul class="steps">
+          <li><b>1</b><span>Drag &amp; drop · paste (⌘V) · file picker</span></li>
+          <li><b>2</b><span>Repo README renders by default</span></li>
+          <li><b>3</b><span>Nothing is uploaded — it all runs in your browser</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">02</span><h2>The rendering pipeline</h2></div>
+    <div class="flow">
+      <div class="node"><div class="k">Source</div><div class="v">Markdown file (<span class="mono">.md</span>)</div><div class="d">Any bytes — Unicode, emoji, embedded HTML.</div></div>
+      <div class="arrow">↓</div>
+      <div class="node"><div class="k">Encode</div><div class="v">base64 the content + filename</div><div class="d">Turns the file into a single safe line — no character can break the HTML or JS it's injected into.</div></div>
+      <div class="arrow">↓</div>
+      <div class="node"><div class="k">Inject</div><div class="v">Substitute into the self-contained template</div><div class="d">One HTML file with every CSS/JS library already inlined. No network needed from here on.</div></div>
+      <div class="arrow">↓</div>
+      <div class="node"><div class="k">Browser</div><div class="v">Decode base64 → UTF-8 text</div><div class="d">Then two renderers run over the same text, in parallel:</div></div>
+      <div class="arrow">↓</div>
+      <div class="split-row">
+        <div class="node">
+          <div class="pane-k">Left · Rendered</div>
+          <div class="v">Pretty document</div>
+          <div class="chain"><span>marked</span><span>→</span><span class="safe">DOMPurify</span><span>→</span><span>innerHTML</span></div>
+          <div class="d">Markdown → HTML, then sanitized so a downloaded file's scripts can't run.</div>
+        </div>
+        <div class="node">
+          <div class="pane-k">Right · Source</div>
+          <div class="v">Highlighted source</div>
+          <div class="chain"><span>highlight.js</span><span>→</span><span>markdown grammar</span></div>
+          <div class="d">The raw text stays verbatim — colour-coded so headings, bullets and code are visible in the source too.</div>
+        </div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="node"><div class="k">Result</div><div class="v">Split view · scroll-synced · resizable</div><div class="d">Read the formatted version and the source at once — drag the divider, scroll either side.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="num">03</span><h2>What makes it hold together</h2></div>
+    <div class="cards">
+      <div class="card"><h4><span class="dot"></span>Self-contained &amp; offline</h4><p>Fonts, CSS and every JS library are inlined into one HTML file. It works with no internet, no <code>npm</code>, no runtime dependencies.</p></div>
+      <div class="card"><h4><span class="dot"></span>Safe by construction</h4><p>base64 sidesteps every HTML-escaping bug; <code>DOMPurify</code> strips scripts and event handlers from the rendered side.</p></div>
+      <div class="card"><h4><span class="dot"></span>Token-driven themes</h4><p><code>[data-theme]</code> × <code>[data-mode]</code> drive Minimalist and Swiss Grid, each in light and dark — all from CSS custom properties.</p></div>
+      <div class="card"><h4><span class="dot"></span>No build chain</h4><p>A pure Bash generator assembles both outputs. The whole thing is text in, text out — reviewable and diff-able.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <a class="cta" href="/">Open the viewer →</a>
+    <div><span class="foot-note">Built with</span></div>
+    <div class="stack">
+      <span>marked</span><span>DOMPurify</span><span>highlight.js</span><span>IBM&nbsp;Plex</span>
+      <span>Bash / Automator</span><span>Vercel</span><span>File&nbsp;System&nbsp;Access&nbsp;API</span>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

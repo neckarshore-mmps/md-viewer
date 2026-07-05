@@ -151,6 +151,9 @@ body {
   cursor: pointer;
   font-family: var(--font-mono);
   letter-spacing: 0.03em;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -415,6 +418,7 @@ body {
     <button class="btn" id="open" type="button">Open .md</button>
     <input type="file" id="file" accept=".md,.markdown,.mdown,.mkd,.mdx,text/markdown" hidden>
     <button class="btn" id="readme" type="button">readme.md</button>
+    <a class="btn" id="howto" href="/how-it-works">How it works</a>
   </span>
   <span class="nav-right">
     <span class="theme-menu" id="themeMenu">
