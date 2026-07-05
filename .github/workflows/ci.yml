@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x build.sh bin/mdview test/smoke.sh test/web-smoke.sh
+
+      - name: Committed build artifacts are up to date with src/
+        run: |
+          ./build.sh
+          git diff --exit-code -- viewer.html web/index.html \
+            || { echo "::error::viewer.html / web/index.html are stale — run ./build.sh and commit."; exit 1; }
+
+      - name: Smoke tests (web + Finder)
+        run: ./test/web-smoke.sh
