@@ -180,6 +180,21 @@
     try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
   });
 
+  // ─── Proportional scroll sync between the two panes ────────
+  var right = document.querySelector(".pane.right");
+  var syncing = false;
+  function syncFrom(src, dst) {
+    if (syncing) return;
+    var srcMax = src.scrollHeight - src.clientHeight;
+    var dstMax = dst.scrollHeight - dst.clientHeight;
+    if (srcMax <= 0 || dstMax <= 0) return;
+    syncing = true;
+    dst.scrollTop = (src.scrollTop / srcMax) * dstMax;
+    requestAnimationFrame(function () { syncing = false; });
+  }
+  left.addEventListener("scroll", function () { syncFrom(left, right); });
+  right.addEventListener("scroll", function () { syncFrom(right, left); });
+
   // ─── Initial document = repo README ────────────────────────
   render(README, "README.md");
 })();
