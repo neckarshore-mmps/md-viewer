@@ -1,0 +1,28 @@
+<header class="bar">
+  <span id="filename">Markdown Viewer</span>
+  <span class="controls">
+    <label class="btn" for="file">Open .md</label>
+    <input type="file" id="file" accept=".md,.markdown,.mdown,.mkd,.mdx,text/markdown" hidden>
+    <button class="btn" id="sample" type="button">Sample</button>
+  </span>
+  <span class="hint">✨ Rendered&nbsp;&nbsp;·&nbsp;&nbsp;Raw MD 📝</span>
+</header>
+
+<div class="split" id="split" hidden>
+  <section class="pane left"><article id="rendered" class="markdown-body"></article></section>
+  <div class="divider" id="divider" title="Drag to resize"></div>
+  <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
+</div>
+
+<div class="empty" id="empty">
+  <div class="empty-inner">
+    <div class="empty-icon">📄</div>
+    <h1>Markdown Viewer</h1>
+    <p>Drop a <code>.md</code> file, paste Markdown (⌘V / Ctrl+V), or
+       <label for="file" class="link">choose a file</label>.</p>
+    <p class="sub">Rendered on the left, syntax-highlighted source on the right.
+       Everything runs in your browser — nothing is uploaded.</p>
+  </div>
+</div>
+
+<div class="drop-overlay" id="dropOverlay"><div class="drop-inner">Drop to open ⬇︎</div></div>
