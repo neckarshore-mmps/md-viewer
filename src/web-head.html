@@ -1,0 +1,16 @@
+<script>
+/* No-FOUC theme init: set data-theme/data-mode before first paint.
+   Default theme = swiss; mode = stored choice, else system preference. */
+(function () {
+  var THEMES = { minimalist: 1, swiss: 1, brutalist: 1 };
+  var t = localStorage.getItem("mdv-theme");
+  if (!THEMES[t]) t = "swiss";
+  var m = localStorage.getItem("mdv-mode");
+  if (m !== "light" && m !== "dark") {
+    m = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  var r = document.documentElement;
+  r.setAttribute("data-theme", t);
+  r.setAttribute("data-mode", m);
+})();
+</script>
