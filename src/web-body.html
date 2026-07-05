@@ -1,7 +1,7 @@
 <header class="bar">
   <span id="filename">Markdown Viewer</span>
   <span class="controls">
-    <label class="btn" for="file">Open .md</label>
+    <button class="btn" id="open" type="button">Open .md</button>
     <input type="file" id="file" accept=".md,.markdown,.mdown,.mkd,.mdx,text/markdown" hidden>
     <button class="btn" id="sample" type="button">Sample</button>
   </span>
@@ -19,7 +19,7 @@
     <div class="empty-icon">📄</div>
     <h1>Markdown Viewer</h1>
     <p>Drop a <code>.md</code> file, paste Markdown (⌘V / Ctrl+V), or
-       <label for="file" class="link">choose a file</label>.</p>
+       <button type="button" id="openEmpty" class="link link-btn">choose a file</button>.</p>
     <p class="sub">Rendered on the left, syntax-highlighted source on the right.
        Everything runs in your browser — nothing is uploaded.</p>
   </div>

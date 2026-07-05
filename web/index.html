@@ -1344,6 +1344,7 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   border-radius: 4px;
 }
 .link { color: #3b82f6; cursor: pointer; text-decoration: underline; }
+.link-btn { font: inherit; background: none; border: none; padding: 0; }
 
 /* Drag-and-drop overlay */
 .drop-overlay {
@@ -1373,7 +1374,7 @@ body { display: flex; flex-direction: column; background: var(--bg); }
 <header class="bar">
   <span id="filename">Markdown Viewer</span>
   <span class="controls">
-    <label class="btn" for="file">Open .md</label>
+    <button class="btn" id="open" type="button">Open .md</button>
     <input type="file" id="file" accept=".md,.markdown,.mdown,.mkd,.mdx,text/markdown" hidden>
     <button class="btn" id="sample" type="button">Sample</button>
   </span>
@@ -1391,7 +1392,7 @@ body { display: flex; flex-direction: column; background: var(--bg); }
     <div class="empty-icon">📄</div>
     <h1>Markdown Viewer</h1>
     <p>Drop a <code>.md</code> file, paste Markdown (⌘V / Ctrl+V), or
-       <label for="file" class="link">choose a file</label>.</p>
+       <button type="button" id="openEmpty" class="link link-btn">choose a file</button>.</p>
     <p class="sub">Rendered on the left, syntax-highlighted source on the right.
        Everything runs in your browser — nothing is uploaded.</p>
   </div>
@@ -2696,8 +2697,42 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
     reader.readAsText(file, "utf-8");
   }
 
-  // File picker
-  document.getElementById("file").addEventListener("change", function (e) {
+  // Open dialog. Prefer the File System Access API so the picker can default to
+  // the Downloads folder and remember the last-used folder (via the stable `id`,
+  // persisted by the browser across sessions). Falls back to a plain <input>
+  // where the API is unavailable (Firefox, Safari).
+  var fileInput = document.getElementById("file");
+
+  async function openViaDialog() {
+    if (window.showOpenFilePicker) {
+      try {
+        var handles = await window.showOpenFilePicker({
+          id: "md-viewer",          // browser remembers the last folder per id
+          startIn: "downloads",     // default on first use, before a folder is remembered
+          multiple: false,
+          types: [{
+            description: "Markdown",
+            accept: {
+              "text/markdown": [".md", ".markdown", ".mdown", ".mkd", ".mdx"],
+              "text/plain": [".txt"]
+            }
+          }]
+        });
+        var file = await handles[0].getFile();
+        openFile(file);
+      } catch (err) {
+        // AbortError = user cancelled the dialog; ignore. Anything else: fall back.
+        if (err && err.name !== "AbortError") fileInput.click();
+      }
+    } else {
+      fileInput.click();
+    }
+  }
+
+  document.getElementById("open").addEventListener("click", openViaDialog);
+  document.getElementById("openEmpty").addEventListener("click", openViaDialog);
+
+  fileInput.addEventListener("change", function (e) {
     if (e.target.files && e.target.files[0]) openFile(e.target.files[0]);
   });
 

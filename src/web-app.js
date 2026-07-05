@@ -38,8 +38,42 @@
     reader.readAsText(file, "utf-8");
   }
 
-  // File picker
-  document.getElementById("file").addEventListener("change", function (e) {
+  // Open dialog. Prefer the File System Access API so the picker can default to
+  // the Downloads folder and remember the last-used folder (via the stable `id`,
+  // persisted by the browser across sessions). Falls back to a plain <input>
+  // where the API is unavailable (Firefox, Safari).
+  var fileInput = document.getElementById("file");
+
+  async function openViaDialog() {
+    if (window.showOpenFilePicker) {
+      try {
+        var handles = await window.showOpenFilePicker({
+          id: "md-viewer",          // browser remembers the last folder per id
+          startIn: "downloads",     // default on first use, before a folder is remembered
+          multiple: false,
+          types: [{
+            description: "Markdown",
+            accept: {
+              "text/markdown": [".md", ".markdown", ".mdown", ".mkd", ".mdx"],
+              "text/plain": [".txt"]
+            }
+          }]
+        });
+        var file = await handles[0].getFile();
+        openFile(file);
+      } catch (err) {
+        // AbortError = user cancelled the dialog; ignore. Anything else: fall back.
+        if (err && err.name !== "AbortError") fileInput.click();
+      }
+    } else {
+      fileInput.click();
+    }
+  }
+
+  document.getElementById("open").addEventListener("click", openViaDialog);
+  document.getElementById("openEmpty").addEventListener("click", openViaDialog);
+
+  fileInput.addEventListener("change", function (e) {
     if (e.target.files && e.target.files[0]) openFile(e.target.files[0]);
   });
 
