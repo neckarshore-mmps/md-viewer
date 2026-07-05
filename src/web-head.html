@@ -1,9 +1,30 @@
-<meta name="description" content="Markdown Viewer — read Markdown in a split view: rendered on the left, syntax-highlighted source on the right. Three themes, light/dark, fully client-side.">
+<meta name="description" content="Markdown Viewer — read Markdown in a split view: rendered on the left, syntax-highlighted source on the right. Two themes, light/dark, fully client-side.">
+<link rel="canonical" href="https://md.neckarshore.ai/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://md.neckarshore.ai/">
+<meta property="og:title" content="Markdown Viewer — rendered + source, side by side">
+<meta property="og:description" content="Read Markdown in a split view: rendered on the left, syntax-highlighted source on the right. Two themes, light/dark, fully client-side — nothing is uploaded.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Markdown Viewer — rendered + source, side by side">
+<meta name="twitter:description" content="Read Markdown in a split view: rendered left, syntax-highlighted source right. Fully client-side — nothing is uploaded.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Markdown Viewer",
+  "url": "https://md.neckarshore.ai/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (browser)",
+  "browserRequirements": "Requires JavaScript",
+  "description": "Read Markdown in a split view: rendered on the left, syntax-highlighted source on the right. Two themes, light/dark, fully client-side.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
 <script>
 /* No-FOUC theme init: set data-theme/data-mode before first paint.
    Default theme = swiss; mode = stored choice, else system preference. */
 (function () {
-  var THEMES = { minimalist: 1, swiss: 1, brutalist: 1 };
+  var THEMES = { minimalist: 1, swiss: 1 };
   var t = localStorage.getItem("mdv-theme");
   if (!THEMES[t]) t = "swiss";
   var m = localStorage.getItem("mdv-mode");
