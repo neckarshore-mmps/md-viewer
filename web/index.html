@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>md-viewer</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%84%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Markdown Viewer — read Markdown in a split view: rendered on the left, syntax-highlighted source on the right. Three themes, light/dark, fully client-side.">
 <script>
 /* No-FOUC theme init: set data-theme/data-mode before first paint.
    Default theme = swiss; mode = stored choice, else system preference. */
@@ -486,7 +487,7 @@ body {
   </span>
 </nav>
 
-<div class="stage">
+<main class="stage">
   <aside class="grid-rail" aria-hidden="true">
     <span class="rail-num rail-lead">001</span>
     <span class="rail-num">02</span>
@@ -498,7 +499,7 @@ body {
     <div class="divider" id="divider" title="Drag to resize"></div>
     <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
   </div>
-</div>
+</main>
 
 <footer class="foot" id="foot">Drop a .md<span class="sep">·</span>paste ⌘V / Ctrl+V<span class="sep">·</span>choose a file<span class="sep">·</span>rendered left, source right<span class="sep">·</span>nothing is uploaded</footer>
 
