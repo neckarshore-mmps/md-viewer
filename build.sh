@@ -15,7 +15,8 @@ VENDOR="vendor"
 # Verify inputs exist
 for f in "$SRC/head.html" "$SRC/body.html" "$SRC/layout.css" "$SRC/app.js" \
          "$SRC/web-head.html" "$SRC/web-body.html" "$SRC/web-app.js" \
-         "$SRC/web-fonts.css" "$SRC/web-themes.css" "$SRC/web-chrome.css" "$SRC/web-md.css" \
+         "$SRC/web-fonts.css" "$SRC/web-themes.css" "$SRC/web-chrome.css" \
+         "$SRC/web-chrome-themes.css" "$SRC/web-md.css" \
          "$VENDOR/github-markdown.css" "$VENDOR/hljs-github-light.css" \
          "$VENDOR/hljs-github-dark.css" "$VENDOR/marked.min.js" \
          "$VENDOR/highlight.min.js" "$VENDOR/markdown.min.js" \
@@ -71,6 +72,7 @@ emit_web() {
     echo '/* --- fonts --- */';   cat "$SRC/web-fonts.css"
     echo '/* --- themes --- */';  cat "$SRC/web-themes.css"
     echo '/* --- chrome --- */';  cat "$SRC/web-chrome.css"
+    echo '/* --- theme chrome --- */'; cat "$SRC/web-chrome-themes.css"
     echo '/* --- markdown + highlight --- */'; cat "$SRC/web-md.css"
     echo '</style>'; echo '</head>'; echo '<body>'
     cat "$SRC/web-body.html"

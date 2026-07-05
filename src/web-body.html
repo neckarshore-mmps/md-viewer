@@ -6,10 +6,16 @@
     <button class="btn" id="readme" type="button">readme.md</button>
   </span>
   <span class="nav-right">
-    <span class="theme-switcher" role="group" aria-label="Theme">
-      <button class="tsw" data-theme="minimalist" type="button" title="Minimalist"><span class="sw"></span></button>
-      <button class="tsw" data-theme="swiss" type="button" title="Swiss Grid"><span class="sw"></span></button>
-      <button class="tsw" data-theme="brutalist" type="button" title="Brutalist"><span class="sw"></span></button>
+    <span class="theme-menu" id="themeMenu">
+      <button class="btn theme-menu-btn" id="themeMenuBtn" type="button"
+              aria-haspopup="listbox" aria-expanded="false">
+        <span class="theme-current">Swiss Grid</span><span class="caret">▾</span>
+      </button>
+      <ul class="theme-menu-list" id="themeMenuList" role="listbox" aria-label="Theme" hidden>
+        <li class="theme-opt" role="option" data-theme="minimalist">Minimalist</li>
+        <li class="theme-opt" role="option" data-theme="swiss">Swiss Grid</li>
+        <li class="theme-opt" role="option" data-theme="brutalist">Brutalist</li>
+      </ul>
     </span>
     <button class="btn mode" id="mode" type="button" title="Toggle light/dark" aria-label="Toggle light/dark">
       <span class="mode-icon"></span><span class="mode-label"></span>
@@ -17,10 +23,18 @@
   </span>
 </nav>
 
-<div class="split" id="split">
-  <section class="pane left"><article id="rendered" class="rendered"></article></section>
-  <div class="divider" id="divider" title="Drag to resize"></div>
-  <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
+<div class="stage">
+  <aside class="grid-rail" aria-hidden="true">
+    <span class="rail-num rail-lead">001</span>
+    <span class="rail-num">02</span>
+    <span class="rail-num">03</span>
+    <span class="rail-num">04</span>
+  </aside>
+  <div class="split" id="split">
+    <section class="pane left"><article id="rendered" class="rendered"></article></section>
+    <div class="divider" id="divider" title="Drag to resize"></div>
+    <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
+  </div>
 </div>
 
 <footer class="foot" id="foot">Drop a .md<span class="sep">·</span>paste ⌘V / Ctrl+V<span class="sep">·</span>choose a file<span class="sep">·</span>rendered left, source right<span class="sep">·</span>nothing is uploaded</footer>

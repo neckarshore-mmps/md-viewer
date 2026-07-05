@@ -1,0 +1,89 @@
+/* web-chrome-themes.css — theme-scoped chrome (header/footer/rail) that gives
+   each design language a louder identity. Token-driven; loaded after
+   web-chrome.css so these overrides win by specificity. */
+
+/* ══════════════════════════════════════════════════════════════
+   BRUTALIST — taller header, Bebas wordmark, thick accent borders,
+   punch-coloured footer.
+   ══════════════════════════════════════════════════════════════ */
+:root[data-theme="brutalist"] { --bar-h: 62px; }
+
+:root[data-theme="brutalist"] .bar {
+  gap: 16px;
+  border-bottom: 5px solid var(--accent);
+}
+:root[data-theme="brutalist"] #filename {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 27px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  max-width: 42vw;
+  display: inline-flex;
+  align-items: center;
+}
+:root[data-theme="brutalist"] #filename::before {
+  content: "";
+  display: inline-block;
+  width: 14px; height: 24px;
+  background: var(--punch);
+  margin-right: 12px;
+}
+:root[data-theme="brutalist"] .btn { border-width: 2px; }
+
+:root[data-theme="brutalist"] .foot {
+  border-top: 5px solid var(--accent);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 14px;
+  color: var(--punch);
+}
+:root[data-theme="brutalist"] .foot .sep { color: var(--accent); margin: 0 10px; }
+
+/* ══════════════════════════════════════════════════════════════
+   SWISS GRID — decorative left index rail, "001" nav marker, bold
+   wordmark, red accents, hairline precision.
+   ══════════════════════════════════════════════════════════════ */
+:root[data-theme="swiss"] .grid-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  flex: 0 0 46px;
+  padding: 16px 0;
+  background: var(--bg);
+  border-right: 1px solid var(--line);
+}
+:root[data-theme="swiss"] .rail-num {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+:root[data-theme="swiss"] .rail-lead { color: var(--accent); }
+
+:root[data-theme="swiss"] .bar::before {
+  content: "001";
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  padding-right: 14px;
+  border-right: 1px solid var(--line);
+}
+:root[data-theme="swiss"] #filename { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+
+:root[data-theme="swiss"] .foot { text-transform: uppercase; letter-spacing: 0.1em; }
+:root[data-theme="swiss"] .foot::before {
+  content: "◆";
+  color: var(--accent);
+  margin-right: 12px;
+  font-size: 9px;
+}
+:root[data-theme="swiss"] .foot .sep { color: var(--accent); }

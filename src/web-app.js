@@ -91,16 +91,27 @@
 
   // ─── Theme + light/dark ────────────────────────────────────
   var THEMES = ["minimalist", "swiss", "brutalist"];
-  var swatches = Array.prototype.slice.call(document.querySelectorAll(".tsw"));
+  var LABELS = { minimalist: "Minimalist", swiss: "Swiss Grid", brutalist: "Brutalist" };
   var modeBtn = document.getElementById("mode");
   var modeIcon = modeBtn.querySelector(".mode-icon");
   var modeLabel = modeBtn.querySelector(".mode-label");
+
+  var menu = document.getElementById("themeMenu");
+  var menuBtn = document.getElementById("themeMenuBtn");
+  var menuList = document.getElementById("themeMenuList");
+  var menuCurrent = menuBtn.querySelector(".theme-current");
+  var opts = Array.prototype.slice.call(menuList.querySelectorAll(".theme-opt"));
 
   function applyTheme(t) {
     if (THEMES.indexOf(t) < 0) t = "swiss";
     root.setAttribute("data-theme", t);
     try { localStorage.setItem("mdv-theme", t); } catch (e) {}
-    swatches.forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-theme") === t); });
+    menuCurrent.textContent = LABELS[t];
+    opts.forEach(function (o) {
+      var on = o.getAttribute("data-theme") === t;
+      o.classList.toggle("active", on);
+      o.setAttribute("aria-selected", on ? "true" : "false");
+    });
   }
   function applyMode(m) {
     if (m !== "light" && m !== "dark") m = "light";
@@ -113,11 +124,35 @@
   applyTheme(root.getAttribute("data-theme") || "swiss");
   applyMode(root.getAttribute("data-mode") || "light");
 
-  swatches.forEach(function (b) {
-    b.addEventListener("click", function () { applyTheme(b.getAttribute("data-theme")); });
+  // Dropdown open/close + keyboard typeahead
+  var typed = "";
+  function openMenu() { menuList.hidden = false; menuBtn.setAttribute("aria-expanded", "true"); typed = ""; }
+  function closeMenu() { menuList.hidden = true; menuBtn.setAttribute("aria-expanded", "false"); opts.forEach(function (o) { o.classList.remove("focus"); }); }
+  function isOpen() { return !menuList.hidden; }
+
+  menuBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    isOpen() ? closeMenu() : openMenu();
   });
-  modeBtn.addEventListener("click", function () {
-    applyMode(root.getAttribute("data-mode") === "dark" ? "light" : "dark");
+  opts.forEach(function (o) {
+    o.addEventListener("click", function () { applyTheme(o.getAttribute("data-theme")); closeMenu(); });
+  });
+  document.addEventListener("click", function (e) { if (isOpen() && !menu.contains(e.target)) closeMenu(); });
+  document.addEventListener("keydown", function (e) {
+    if (!isOpen()) return;
+    if (e.key === "Escape") { closeMenu(); menuBtn.focus(); return; }
+    if (e.key === "Enter") {
+      var f = menuList.querySelector(".theme-opt.focus");
+      if (f) { applyTheme(f.getAttribute("data-theme")); closeMenu(); }
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(e.key)) {
+      typed += e.key.toLowerCase();
+      var match = opts.filter(function (o) { return LABELS[o.getAttribute("data-theme")].toLowerCase().indexOf(typed) === 0; })[0]
+               || opts.filter(function (o) { return LABELS[o.getAttribute("data-theme")].toLowerCase().indexOf(e.key.toLowerCase()) === 0; })[0];
+      if (match) { opts.forEach(function (o) { o.classList.toggle("focus", o === match); }); }
+      else { typed = ""; }
+    }
   });
 
   // ─── Draggable divider (axis-aware: horizontal desktop, vertical mobile) ──
@@ -144,6 +179,21 @@
     dragging = false; document.body.style.cursor = "";
     try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
   });
+
+  // ─── Proportional scroll sync between the two panes ────────
+  var right = document.querySelector(".pane.right");
+  var syncing = false;
+  function syncFrom(src, dst) {
+    if (syncing) return;
+    var srcMax = src.scrollHeight - src.clientHeight;
+    var dstMax = dst.scrollHeight - dst.clientHeight;
+    if (srcMax <= 0 || dstMax <= 0) return;
+    syncing = true;
+    dst.scrollTop = (src.scrollTop / srcMax) * dstMax;
+    requestAnimationFrame(function () { syncing = false; });
+  }
+  left.addEventListener("scroll", function () { syncFrom(left, right); });
+  right.addEventListener("scroll", function () { syncFrom(right, left); });
 
   // ─── Initial document = repo README ────────────────────────
   render(README, "README.md");
