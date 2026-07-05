@@ -22,16 +22,6 @@
   --display-spacing: -0.02em;
   --display-transform: none;
 }
-:root[data-theme="brutalist"] {
-  --font-sans: "Space Mono", ui-monospace, Menlo, monospace;
-  --font-mono: "Space Mono", ui-monospace, Menlo, monospace;
-  --font-display: "Bebas Neue", Impact, Haettenschweiler, sans-serif;
-  --bw: 3px;
-  --display-weight: 400;
-  --display-spacing: 0.02em;
-  --display-transform: uppercase;
-}
-
 /* ─── Minimalist — black / white / grey only ────────────────── */
 :root[data-theme="minimalist"][data-mode="light"] {
   --bg: #ffffff; --fg: #1a1a1a; --surface: #f5f5f5; --sfg: #1a1a1a;
@@ -50,14 +40,4 @@
 :root[data-theme="swiss"][data-mode="dark"] {
   --bg: #080808; --fg: #f0f0f0; --surface: #141414; --sfg: #f0f0f0;
   --muted: #606060; --line: rgba(240,240,240,0.10); --accent: #ff2800; --punch: #f0f0f0;
-}
-
-/* ─── Brutalist — Bebas + Space Mono, heavy borders, punch ──── */
-:root[data-theme="brutalist"][data-mode="light"] {
-  --bg: #f5f0e8; --fg: #0c0c0b; --surface: #0c0c0b; --sfg: #f5f0e8;
-  --muted: #8a8577; --line: #0c0c0b; --accent: #e8240a; --punch: #c9a800;
-}
-:root[data-theme="brutalist"][data-mode="dark"] {
-  --bg: #0d0d0d; --fg: #d4cfc3; --surface: #141414; --sfg: #d4cfc3;
-  --muted: #7d7869; --line: #d4cfc3; --accent: #ff2d00; --punch: #00ff87;
 }

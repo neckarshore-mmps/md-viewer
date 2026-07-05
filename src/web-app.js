@@ -90,8 +90,8 @@
   });
 
   // ─── Theme + light/dark ────────────────────────────────────
-  var THEMES = ["minimalist", "swiss", "brutalist"];
-  var LABELS = { minimalist: "Minimalist", swiss: "Swiss Grid", brutalist: "Brutalist" };
+  var THEMES = ["minimalist", "swiss"];
+  var LABELS = { minimalist: "Minimalist", swiss: "Swiss Grid" };
   var modeBtn = document.getElementById("mode");
   var modeIcon = modeBtn.querySelector(".mode-icon");
   var modeLabel = modeBtn.querySelector(".mode-label");

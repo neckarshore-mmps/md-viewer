@@ -24,9 +24,7 @@ theme system. Fetched 2026-07-05 from `@fontsource/<pkg>@5` (latest v5).
 
 | Font | Weights | Package (jsDelivr) |
 |------|---------|--------------------|
-| Bebas Neue | 400 | `@fontsource/bebas-neue@5/files/bebas-neue-latin-400-normal.woff2` |
 | IBM Plex Mono | 400, 700 | `@fontsource/ibm-plex-mono@5/files/ibm-plex-mono-latin-<w>-normal.woff2` |
 | IBM Plex Sans | 400, 500, 700 | `@fontsource/ibm-plex-sans@5/files/ibm-plex-sans-latin-<w>-normal.woff2` |
-| Space Mono | 400, 700 | `@fontsource/space-mono@5/files/space-mono-latin-<w>-normal.woff2` |
 
 To update: re-download into `web/fonts/`, then `./build.sh` + `./test/web-smoke.sh`.

@@ -15,13 +15,23 @@ echo "==> md-viewer web smoke test"
 
 [ -f "$OUT" ] && pass "web/index.html built" || die "web/index.html missing"
 
-# Theme system: 6 colour token blocks + 3 font/structure blocks = 9 data-theme selectors.
+# Theme system: 2 themes × 2 modes = 4 colour token blocks.
 n=$(grep -o 'data-theme="[a-z]*"\]\[data-mode' "$OUT" | wc -l | tr -d ' ')
-[ "$n" -eq 6 ] && pass "6 theme×mode token blocks" || die "expected 6 theme×mode blocks, got $n"
-for t in minimalist swiss brutalist; do
+[ "$n" -eq 4 ] && pass "4 theme×mode token blocks" || die "expected 4 theme×mode blocks, got $n"
+for t in minimalist swiss; do
   grep -q "data-theme=\"$t\"" "$OUT" && pass "theme present: $t" || die "theme missing: $t"
 done
+grep -q 'data-theme="brutalist"' "$OUT" && die "brutalist theme should be removed" || pass "brutalist removed"
 grep -q "mdv-theme" "$OUT" && pass "no-FOUC init present" || die "theme init missing"
+
+# SEO tags.
+grep -q 'name="description"' "$OUT" && pass "meta description" || die "meta description missing"
+grep -q 'rel="canonical"' "$OUT" && pass "canonical link" || die "canonical missing"
+grep -q 'property="og:title"' "$OUT" && pass "Open Graph tags" || die "OG tags missing"
+grep -q 'application/ld+json' "$OUT" && pass "JSON-LD schema" || die "JSON-LD missing"
+grep -q '<title>Markdown Viewer' "$OUT" && pass "descriptive web title" || die "web title not descriptive"
+[ -f "$ROOT/web/robots.txt" ] && pass "robots.txt present" || die "robots.txt missing"
+[ -f "$ROOT/web/sitemap.xml" ] && pass "sitemap.xml present" || die "sitemap.xml missing"
 
 # README embedded (base64 prefix of README.md must appear; no leftover placeholder).
 grep -qF "$(base64 < "$ROOT/README.md" | tr -d '\n' | cut -c1-40)" "$OUT" && pass "README payload embedded" || die "README not embedded"
@@ -29,9 +39,9 @@ grep -q "__README_B64__" "$OUT" && die "unresolved __README_B64__ placeholder" |
 
 # Fonts: all 8 woff2 referenced + files present.
 refs=$(grep -o './fonts/[a-z0-9-]*\.woff2' "$OUT" | sort -u | wc -l | tr -d ' ')
-[ "$refs" -eq 8 ] && pass "8 font files referenced" || die "expected 8 font refs, got $refs"
+[ "$refs" -eq 5 ] && pass "5 font files referenced" || die "expected 5 font refs, got $refs"
 files=$(ls "$ROOT"/web/fonts/*.woff2 2>/dev/null | wc -l | tr -d ' ')
-[ "$files" -eq 8 ] && pass "8 font files present" || die "expected 8 font files, got $files"
+[ "$files" -eq 5 ] && pass "5 font files present" || die "expected 5 font files, got $files"
 
 # Round-2 features present.
 grep -q 'id="themeMenuList"' "$OUT" && pass "theme dropdown present" || die "theme dropdown missing"

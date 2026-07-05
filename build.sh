@@ -40,6 +40,7 @@ emit_finder() {
   {
     echo '<!doctype html>'; echo '<html lang="en">'; echo '<head>'
     cat "$SRC/head.html"
+    echo '<title>md-viewer</title>'
     echo '<style>'
     echo '/* --- github-markdown-css (rendered pane, auto light/dark) --- */'
     cat "$VENDOR/github-markdown.css"
@@ -67,6 +68,7 @@ emit_web() {
   {
     echo '<!doctype html>'; echo '<html lang="en">'; echo '<head>'
     cat "$SRC/head.html"
+    echo '<title>Markdown Viewer — rendered + source, side by side</title>'
     cat "$SRC/web-head.html"
     echo '<style>'
     echo '/* --- fonts --- */';   cat "$SRC/web-fonts.css"
