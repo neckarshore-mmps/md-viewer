@@ -48,6 +48,9 @@ body {
   cursor: pointer;
   font-family: var(--font-mono);
   letter-spacing: 0.03em;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 
