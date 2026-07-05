@@ -264,6 +264,50 @@ body {
   .foot { font-size: 10px; letter-spacing: 0.02em; }
   .foot .sep { margin: 0 5px; }
 }
+/* --- theme chrome --- */
+/* web-chrome-themes.css — theme-scoped chrome (header/footer/rail) that gives
+   each design language a louder identity. Token-driven; loaded after
+   web-chrome.css so these overrides win by specificity. */
+
+/* ══════════════════════════════════════════════════════════════
+   BRUTALIST — taller header, Bebas wordmark, thick accent borders,
+   punch-coloured footer.
+   ══════════════════════════════════════════════════════════════ */
+:root[data-theme="brutalist"] { --bar-h: 62px; }
+
+:root[data-theme="brutalist"] .bar {
+  gap: 16px;
+  border-bottom: 5px solid var(--accent);
+}
+:root[data-theme="brutalist"] #filename {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 27px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  max-width: 42vw;
+  display: inline-flex;
+  align-items: center;
+}
+:root[data-theme="brutalist"] #filename::before {
+  content: "";
+  display: inline-block;
+  width: 14px; height: 24px;
+  background: var(--punch);
+  margin-right: 12px;
+}
+:root[data-theme="brutalist"] .btn { border-width: 2px; }
+
+:root[data-theme="brutalist"] .foot {
+  border-top: 5px solid var(--accent);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 14px;
+  color: var(--punch);
+}
+:root[data-theme="brutalist"] .foot .sep { color: var(--accent); margin: 0 10px; }
 /* --- markdown + highlight --- */
 /* web-md.css — rendered markdown (left) + raw-source highlighting (right),
    both driven entirely by theme tokens. Monochrome themes fall out of grey
