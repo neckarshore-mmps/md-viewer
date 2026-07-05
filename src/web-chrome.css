@@ -82,6 +82,10 @@ body {
 .mode-icon { font-size: 13px; line-height: 1; }
 .mode-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
 
+/* ─── Stage (optional left rail + split) ─────────────────────── */
+.stage { flex: 1 1 auto; display: flex; min-height: 0; }
+.grid-rail { display: none; }  /* shown only by Swiss theme (web-chrome-themes.css) */
+
 /* ─── Split panes ────────────────────────────────────────────── */
 .split { flex: 1 1 auto; display: flex; min-height: 0; }
 .pane { overflow: auto; min-width: 0; min-height: 0; height: 100%; }
@@ -155,4 +159,5 @@ body {
   }
   .foot { font-size: 10px; letter-spacing: 0.02em; }
   .foot .sep { margin: 0 5px; }
+  .grid-rail { display: none !important; }
 }

@@ -190,6 +190,10 @@ body {
 .mode-icon { font-size: 13px; line-height: 1; }
 .mode-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
 
+/* ─── Stage (optional left rail + split) ─────────────────────── */
+.stage { flex: 1 1 auto; display: flex; min-height: 0; }
+.grid-rail { display: none; }  /* shown only by Swiss theme (web-chrome-themes.css) */
+
 /* ─── Split panes ────────────────────────────────────────────── */
 .split { flex: 1 1 auto; display: flex; min-height: 0; }
 .pane { overflow: auto; min-width: 0; min-height: 0; height: 100%; }
@@ -263,6 +267,7 @@ body {
   }
   .foot { font-size: 10px; letter-spacing: 0.02em; }
   .foot .sep { margin: 0 5px; }
+  .grid-rail { display: none !important; }
 }
 /* --- theme chrome --- */
 /* web-chrome-themes.css — theme-scoped chrome (header/footer/rail) that gives
@@ -308,6 +313,52 @@ body {
   color: var(--punch);
 }
 :root[data-theme="brutalist"] .foot .sep { color: var(--accent); margin: 0 10px; }
+
+/* ══════════════════════════════════════════════════════════════
+   SWISS GRID — decorative left index rail, "001" nav marker, bold
+   wordmark, red accents, hairline precision.
+   ══════════════════════════════════════════════════════════════ */
+:root[data-theme="swiss"] .grid-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  flex: 0 0 46px;
+  padding: 16px 0;
+  background: var(--bg);
+  border-right: 1px solid var(--line);
+}
+:root[data-theme="swiss"] .rail-num {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+:root[data-theme="swiss"] .rail-lead { color: var(--accent); }
+
+:root[data-theme="swiss"] .bar::before {
+  content: "001";
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  padding-right: 14px;
+  border-right: 1px solid var(--line);
+}
+:root[data-theme="swiss"] #filename { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+
+:root[data-theme="swiss"] .foot { text-transform: uppercase; letter-spacing: 0.1em; }
+:root[data-theme="swiss"] .foot::before {
+  content: "◆";
+  color: var(--accent);
+  margin-right: 12px;
+  font-size: 9px;
+}
+:root[data-theme="swiss"] .foot .sep { color: var(--accent); }
 /* --- markdown + highlight --- */
 /* web-md.css — rendered markdown (left) + raw-source highlighting (right),
    both driven entirely by theme tokens. Monochrome themes fall out of grey
@@ -435,10 +486,18 @@ body {
   </span>
 </nav>
 
-<div class="split" id="split">
-  <section class="pane left"><article id="rendered" class="rendered"></article></section>
-  <div class="divider" id="divider" title="Drag to resize"></div>
-  <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
+<div class="stage">
+  <aside class="grid-rail" aria-hidden="true">
+    <span class="rail-num rail-lead">001</span>
+    <span class="rail-num">02</span>
+    <span class="rail-num">03</span>
+    <span class="rail-num">04</span>
+  </aside>
+  <div class="split" id="split">
+    <section class="pane left"><article id="rendered" class="rendered"></article></section>
+    <div class="divider" id="divider" title="Drag to resize"></div>
+    <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
+  </div>
 </div>
 
 <footer class="foot" id="foot">Drop a .md<span class="sep">·</span>paste ⌘V / Ctrl+V<span class="sep">·</span>choose a file<span class="sep">·</span>rendered left, source right<span class="sep">·</span>nothing is uploaded</footer>
