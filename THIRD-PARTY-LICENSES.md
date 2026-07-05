@@ -15,7 +15,7 @@ themselves.
 - **License:** Apache License 2.0 OR Mozilla Public License 2.0 (dual-licensed; this project applies the Apache-2.0 terms below)
 - **Source:** https://github.com/cure53/DOMPurify
 
-```
+```text
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -202,7 +202,7 @@ themselves.
 - **License:** MIT
 - **Source:** https://github.com/markedjs/marked
 
-```
+```text
 Copyright (c) 2018+, MarkedJS (https://github.com/markedjs/)
 Copyright (c) 2011-2018, Christopher Jeffrey (https://github.com/chjj/)
 
@@ -228,7 +228,7 @@ THE SOFTWARE.
 marked's own license also carries forward the original Markdown.pl notice
 (marked is a derivative implementation of the Markdown spec):
 
-```
+```text
 Copyright © 2004, John Gruber
 http://daringfireball.net/
 All rights reserved.
@@ -267,7 +267,7 @@ possibility of such damage.
 - **License:** BSD-3-Clause
 - **Source:** https://github.com/highlightjs/highlight.js
 
-```
+```text
 BSD 3-Clause License
 
 Copyright (c) 2006, Ivan Sagalaev.
@@ -311,7 +311,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   permission notice below is reproduced here per the MIT license's
   distribution requirement.
 
-```
+```text
 MIT License
 
 Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
