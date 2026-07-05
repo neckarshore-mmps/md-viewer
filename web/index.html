@@ -1304,18 +1304,100 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   background: transparent !important;
   padding: 0 !important;
 }
+/* --- extra: src/web-layout.css --- */
+/* md-viewer web — controls, empty state, drop overlay (extends layout.css) */
+
+.bar .controls { display: flex; gap: 8px; align-items: center; margin-left: 18px; }
+.btn {
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--bar-fg);
+  cursor: pointer;
+  user-select: none;
+}
+.btn:hover { border-color: #3b82f6; color: #3b82f6; }
+
+/* Empty state */
+.empty {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+.empty[hidden] { display: none; }
+.empty-inner { max-width: 460px; color: var(--bar-fg); }
+.empty-icon { font-size: 52px; margin-bottom: 8px; }
+.empty h1 { margin: 0 0 12px; font-size: 22px; }
+.empty p { margin: 8px 0; font-size: 15px; line-height: 1.5; }
+.empty .sub { font-size: 13px; opacity: 0.8; }
+.empty code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: var(--bg-raw);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.link { color: #3b82f6; cursor: pointer; text-decoration: underline; }
+
+/* Drag-and-drop overlay */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.12);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+  pointer-events: none;
+}
+.drop-overlay.active { display: flex; }
+.drop-inner {
+  border: 3px dashed #3b82f6;
+  border-radius: 16px;
+  padding: 40px 64px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #3b82f6;
+  background: var(--bg);
+}
 </style>
 </head>
 <body>
 <header class="bar">
-  <span id="filename"></span>
+  <span id="filename">Markdown Viewer</span>
+  <span class="controls">
+    <label class="btn" for="file">Open .md</label>
+    <input type="file" id="file" accept=".md,.markdown,.mdown,.mkd,.mdx,text/markdown" hidden>
+    <button class="btn" id="sample" type="button">Sample</button>
+  </span>
   <span class="hint">✨ Rendered&nbsp;&nbsp;·&nbsp;&nbsp;Raw MD 📝</span>
 </header>
-<div class="split">
+
+<div class="split" id="split" hidden>
   <section class="pane left"><article id="rendered" class="markdown-body"></article></section>
-  <div class="divider" id="divider" title="Ziehen zum Verschieben"></div>
+  <div class="divider" id="divider" title="Drag to resize"></div>
   <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
 </div>
+
+<div class="empty" id="empty">
+  <div class="empty-inner">
+    <div class="empty-icon">📄</div>
+    <h1>Markdown Viewer</h1>
+    <p>Drop a <code>.md</code> file, paste Markdown (⌘V / Ctrl+V), or
+       <label for="file" class="link">choose a file</label>.</p>
+    <p class="sub">Rendered on the left, syntax-highlighted source on the right.
+       Everything runs in your browser — nothing is uploaded.</p>
+  </div>
+</div>
+
+<div class="drop-overlay" id="dropOverlay"><div class="drop-inner">Drop to open ⬇︎</div></div>
 <script>
 /**
  * marked v12.0.2 - a markdown parser
@@ -2574,53 +2656,84 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
 ;hljs.registerLanguage("markdown",e)})();
 </script>
 <script>
-/* md-viewer app logic — decode base64 payload, render both panes, drag divider.
-   Placeholders __MD_BASE64__ and __MD_FILENAME_B64__ are replaced by bin/mdview. */
+/* md-viewer web app — interactive browser viewer.
+   Load a .md via file picker, drag-and-drop, or paste, then show the split view
+   (rendered left, syntax-highlighted source right). Fully client-side. */
 (function () {
-  var MD_B64 = "__MD_BASE64__";
-  var NAME_B64 = "__MD_FILENAME_B64__";
-
-  function b64ToUtf8(b64) {
-    var bin = atob(b64);
-    var bytes = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new TextDecoder("utf-8").decode(bytes);
-  }
-
-  var md = b64ToUtf8(MD_B64);
-  var name = b64ToUtf8(NAME_B64);
-
-  document.title = name;
-  document.getElementById("filename").textContent = name;
-
-  // Left: rendered markdown (sanitized with DOMPurify to neutralize any
-  // embedded scripts/handlers in untrusted .md files before injection).
-  if (window.marked) {
-    marked.setOptions({ gfm: true, breaks: false });
-    var html = marked.parse(md);
-    if (window.DOMPurify) html = DOMPurify.sanitize(html);
-    document.getElementById("rendered").innerHTML = html;
-  } else {
-    document.getElementById("rendered").textContent = md;
-  }
-
-  // Right: raw markdown with syntax highlighting
+  var empty = document.getElementById("empty");
+  var split = document.getElementById("split");
+  var rendered = document.getElementById("rendered");
   var codeEl = document.getElementById("rawcode");
-  codeEl.textContent = md;
-  if (window.hljs) {
-    try { hljs.highlightElement(codeEl); } catch (e) { /* fall back to plain text */ }
+  var filename = document.getElementById("filename");
+  var overlay = document.getElementById("dropOverlay");
+
+  if (window.marked) marked.setOptions({ gfm: true, breaks: false });
+
+  function render(md, name) {
+    filename.textContent = name || "Markdown";
+    document.title = (name ? name + " — " : "") + "Markdown Viewer";
+
+    // Left: rendered + sanitized.
+    var html = window.marked ? marked.parse(md) : md;
+    if (window.DOMPurify) html = DOMPurify.sanitize(html);
+    rendered.innerHTML = html;
+
+    // Right: syntax-highlighted source (hljs.highlight escapes HTML → safe).
+    if (window.hljs) {
+      codeEl.innerHTML = hljs.highlight(md, { language: "markdown" }).value;
+    } else {
+      codeEl.textContent = md;
+    }
+
+    empty.hidden = true;
+    split.hidden = false;
   }
+
+  function openFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { render(String(reader.result), file.name); };
+    reader.readAsText(file, "utf-8");
+  }
+
+  // File picker
+  document.getElementById("file").addEventListener("change", function (e) {
+    if (e.target.files && e.target.files[0]) openFile(e.target.files[0]);
+  });
+
+  // Drag and drop (anywhere on the window)
+  var dragDepth = 0;
+  window.addEventListener("dragenter", function (e) {
+    e.preventDefault(); dragDepth++; overlay.classList.add("active");
+  });
+  window.addEventListener("dragover", function (e) { e.preventDefault(); });
+  window.addEventListener("dragleave", function (e) {
+    e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; overlay.classList.remove("active"); }
+  });
+  window.addEventListener("drop", function (e) {
+    e.preventDefault(); dragDepth = 0; overlay.classList.remove("active");
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+      openFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  // Paste markdown text
+  window.addEventListener("paste", function (e) {
+    var text = e.clipboardData && e.clipboardData.getData("text/plain");
+    if (text && text.trim()) { render(text, "Pasted.md"); e.preventDefault(); }
+  });
+
+  // Sample button
+  document.getElementById("sample").addEventListener("click", function () {
+    render(SAMPLE_MD, "sample.md");
+  });
 
   // Draggable divider
   var divider = document.getElementById("divider");
   var left = document.querySelector(".pane.left");
-  var split = document.querySelector(".split");
   var dragging = false;
-
   divider.addEventListener("mousedown", function (e) {
-    dragging = true;
-    document.body.style.cursor = "col-resize";
-    e.preventDefault();
+    dragging = true; document.body.style.cursor = "col-resize"; e.preventDefault();
   });
   window.addEventListener("mousemove", function (e) {
     if (!dragging) return;
@@ -2630,9 +2743,39 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
     left.style.flex = "0 0 " + pct + "%";
   });
   window.addEventListener("mouseup", function () {
-    dragging = false;
-    document.body.style.cursor = "";
+    dragging = false; document.body.style.cursor = "";
   });
+
+  var SAMPLE_MD = [
+    "# Markdown Viewer",
+    "",
+    "A **fast** way to read `.md` files — rendered on the left, *raw source* on the right.",
+    "",
+    "## Features",
+    "",
+    "- Drag & drop a file",
+    "- Paste Markdown with ⌘V",
+    "  - Nested bullets work too",
+    "- Syntax-highlighted source",
+    "",
+    "1. Rendered view",
+    "2. Raw view",
+    "",
+    "> Everything runs in your browser — nothing is uploaded.",
+    "",
+    "```js",
+    "const greet = (name) => `Hello, ${name}!`;",
+    "console.log(greet('Markdown'));",
+    "```",
+    "",
+    "| Pane | Content |",
+    "|------|---------|",
+    "| Left | Rendered |",
+    "| Right | Source |",
+    "",
+    "[Back to neckarshore.ai](https://neckarshore.ai) · Ümlauts & emoji 🚀 render fine.",
+    ""
+  ].join("\n");
 })();
 </script>
 </body>
