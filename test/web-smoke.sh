@@ -33,6 +33,12 @@ refs=$(grep -o './fonts/[a-z0-9-]*\.woff2' "$OUT" | sort -u | wc -l | tr -d ' ')
 files=$(ls "$ROOT"/web/fonts/*.woff2 2>/dev/null | wc -l | tr -d ' ')
 [ "$files" -eq 8 ] && pass "8 font files present" || die "expected 8 font files, got $files"
 
+# Round-2 features present.
+grep -q 'id="themeMenuList"' "$OUT" && pass "theme dropdown present" || die "theme dropdown missing"
+grep -q 'theme chrome' "$OUT" && pass "theme-scoped chrome inlined" || die "web-chrome-themes not inlined"
+grep -q 'class="grid-rail"' "$OUT" && pass "grid rail markup present" || die "grid rail missing"
+grep -q 'font-size: 14px' "$OUT" && pass "raw font bumped to 14px" || die "raw font size not 14px"
+
 # Libraries inlined (offline).
 for lib in marked DOMPurify hljs; do
   grep -q "$lib" "$OUT" && pass "$lib inlined" || die "$lib not inlined"

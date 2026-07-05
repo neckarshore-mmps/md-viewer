@@ -62,9 +62,11 @@ The same viewer runs as a static, client-side web app in `web/index.html`
 It shares the split view with the Finder tool and adds:
 
 1. **Three design themes** — **Minimalist** (black/white/grey), **Swiss Grid**
-   (IBM Plex, red accent, hairline grid — the default), and **Brutalist** (Bebas
-   Neue + Space Mono, heavy borders, punch colours). Switch via the nav swatches;
-   the choice persists. Adding a theme is one token block + one swatch.
+   (IBM Plex, red accent, decorative left index rail — the default), and
+   **Brutalist** (Bebas Neue + Space Mono, heavy borders, punch colours). Each
+   has a loud, theme-scoped header and footer. Pick via the nav **dropdown**
+   (keyboard typeahead — type a theme's initial letter); the choice persists.
+   Adding a theme is one token block + one dropdown entry.
 2. **Light/dark toggle** — per theme; initial state follows the system, the
    choice is remembered.
 3. **README by default** — the repo README renders on open; the **readme.md**
@@ -74,7 +76,8 @@ It shares the split view with the Finder tool and adds:
    plain file input in Firefox/Safari.
 5. **Responsive** — under 640px the split stacks vertically (rendered on top,
    source below).
-6. **Fixed footer** + drag-and-drop + paste, all fully client-side.
+6. **Synced scrolling** — scrolling either pane drives the other proportionally.
+7. **Fixed footer** + drag-and-drop + paste, all fully client-side.
 
 Fonts are self-hosted (`web/fonts/`), so the app stays offline-capable. Themes
 are web-app only — the Finder tool keeps its GitHub styling.
