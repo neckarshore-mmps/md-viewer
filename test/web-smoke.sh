@@ -60,6 +60,12 @@ done
 
 # Finder tool untouched + still green.
 grep -q "splitFrontmatter" "$OUT" && pass "frontmatter splitter inlined" || die "frontmatter splitter not inlined"
+
+# Changelog / release notes: embedded, wired, and footer version resolved.
+grep -q "id=\"changelog\"" "$OUT" && pass "changelog button present" || die "changelog button missing"
+grep -qE 'ver-tag">v[0-9]+\.[0-9]+\.[0-9]+' "$OUT" && pass "footer version resolved" || die "footer version not resolved"
+grep -qE 'ver-sha">[0-9a-f]{7,40}' "$OUT" && pass "footer SHA resolved" || die "footer SHA not resolved"
+grep -q "__APP_VERSION__\|__APP_SHA__\|__CHANGELOG_B64__" "$OUT" && die "unresolved changelog placeholders remain" || pass "changelog placeholders resolved"
 grep -q "mdv-properties" "$OUT" && pass "properties panel styled" || die "properties panel CSS missing"
 
 echo "==> delegating to Finder smoke test"

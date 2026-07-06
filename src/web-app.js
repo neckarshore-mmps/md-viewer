@@ -21,6 +21,7 @@
   }
 
   var README = b64ToUtf8(README_B64);
+  var CHANGELOG = b64ToUtf8("__CHANGELOG_B64__");
 
   // ─── Rendering ─────────────────────────────────────────────
   function render(md, name) {
@@ -135,6 +136,11 @@
   // readme.md button + default document
   document.getElementById("readme").addEventListener("click", function () {
     render(README, "README.md");
+  });
+
+  // changelog (footer) — dogfooding: the release notes open in the viewer itself
+  document.getElementById("changelog").addEventListener("click", function () {
+    render(CHANGELOG, "CHANGELOG.md");
   });
 
   // ─── Drag & drop ───────────────────────────────────────────

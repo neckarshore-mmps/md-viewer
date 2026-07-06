@@ -100,7 +100,8 @@ body {
   flex: 0 0 var(--bar-h);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 0 16px;
   background: var(--surface);
   color: var(--muted);
@@ -109,11 +110,40 @@ body {
   font-size: 11px;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   user-select: none;
 }
 .foot .sep { color: var(--accent); margin: 0 8px; }
+.foot-hints { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.foot-ver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.foot-link {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.foot-link:hover { color: var(--accent); }
+.foot-ver .ver-tag { color: var(--fg); }
+.foot-ver .ver-sha {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  background: var(--bg);
+  border: var(--bw) solid var(--line);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+@media (max-width: 640px) {
+  .foot-hints { display: none; }
+  .foot { justify-content: flex-end; }
+}
 
 /* ─── Drag-and-drop overlay ──────────────────────────────────── */
 .drop-overlay {
