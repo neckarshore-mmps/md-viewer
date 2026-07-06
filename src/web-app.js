@@ -188,6 +188,11 @@
   applyTheme(root.getAttribute("data-theme") || "swiss");
   applyMode(root.getAttribute("data-mode") || "light");
 
+  // Light/dark toggle — flip the current mode on click.
+  modeBtn.addEventListener("click", function () {
+    applyMode(root.getAttribute("data-mode") === "dark" ? "light" : "dark");
+  });
+
   // Dropdown open/close + keyboard typeahead
   var typed = "";
   function openMenu() { menuList.hidden = false; menuBtn.setAttribute("aria-expanded", "true"); typed = ""; }

@@ -20,7 +20,7 @@ Prioritised list of what's deferred. Treat as the single source of truth for
 | 5 | Print / PDF export | `@media print` stylesheet + a print button |
 | 6 | Real line-number gutter in the source pane | We shipped the decorative Swiss rail instead; a true per-line gutter is a separate feature |
 | 7 | `og:image` for shared-link preview | Needs a generated preview image; otherwise the social card has no image |
-| 8 | Browser e2e in CI (Playwright) | Current CI runs the shell smoke tests; a headless browser test would guard the JS behaviour (themes, dropdown, XSS, scroll sync) that shell tests can't |
+| 8 | Browser e2e in CI (Playwright) | Current CI runs shell smoke tests that only **grep the built HTML** — they see "button present" but never execute a click, so a control with a missing handler passes. This exact gap shipped a dead light/dark toggle (fixed in #12). Add a headless "click through every control" sweep: click each nav/footer button + link, assert the observable effect (`data-mode`/`data-theme` flip, rendered-content swap for readme/changelog, dropdown open/close), plus the JS behaviour shell tests can't reach (XSS sanitisation, scroll sync). |
 
 ## Performance round (deliberately deferred — Lighthouse already 100 on SEO/A11y/Best-Practices)
 
