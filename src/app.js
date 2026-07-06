@@ -112,13 +112,16 @@
   function buildPropsPanel(entries) {
     var panel = document.createElement("div");
     panel.className = "mdv-properties";
+    var ci = 0; // running chip index -> deterministic colour variant (0..5)
     entries.forEach(function (e) {
       var row = document.createElement("div"); row.className = "mdv-prop";
       var k = document.createElement("span"); k.className = "mdv-prop-key"; k.textContent = e.key;
       var v = document.createElement("span"); v.className = "mdv-prop-val";
       if (e.items) {
         e.items.forEach(function (it) {
-          var chip = document.createElement("span"); chip.className = "mdv-prop-chip"; chip.textContent = it; v.appendChild(chip);
+          var chip = document.createElement("span");
+          chip.className = "mdv-prop-chip mdv-chip-" + (ci++ % 6);
+          chip.textContent = it; v.appendChild(chip);
         });
       } else {
         v.textContent = e.value;

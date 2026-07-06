@@ -1234,6 +1234,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
   --bar-bg: #f0f2f5;
   --bar-fg: #57606a;
   --border: #d0d7de;
+  --mdv-red: #cc0000;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -1242,6 +1243,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
     --bar-bg: #161b22;
     --bar-fg: #8b949e;
     --border: #30363d;
+    --mdv-red: #ff4d4d;
   }
 }
 
@@ -1317,7 +1319,15 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   border-radius: 999px;
   line-height: 1.5;
   white-space: nowrap;
+  color: var(--color-fg-default, currentColor);
 }
+/* Deterministic colour variants — red / black / greys, filled + outline. */
+.markdown-body .mdv-chip-0 { color: var(--mdv-red); border-color: var(--mdv-red); }                 /* red outline */
+.markdown-body .mdv-chip-1 { color: var(--color-fg-default, currentColor); border-color: var(--color-fg-default, currentColor); } /* black outline */
+.markdown-body .mdv-chip-2 { color: var(--bar-fg); border-color: var(--border); background: var(--bar-bg); }  /* grey fill */
+.markdown-body .mdv-chip-3 { color: var(--bar-fg); border-color: var(--bar-fg); }                   /* grey outline */
+.markdown-body .mdv-chip-4 { color: var(--bg); background: var(--mdv-red); border-color: var(--mdv-red); }    /* red fill */
+.markdown-body .mdv-chip-5 { color: var(--bg); background: var(--color-fg-default, currentColor); border-color: var(--color-fg-default, currentColor); } /* black fill */
 @media (max-width: 640px) {
   .markdown-body .mdv-prop { grid-template-columns: 1fr; gap: 3px; }
 }
@@ -2721,13 +2731,16 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
   function buildPropsPanel(entries) {
     var panel = document.createElement("div");
     panel.className = "mdv-properties";
+    var ci = 0; // running chip index -> deterministic colour variant (0..5)
     entries.forEach(function (e) {
       var row = document.createElement("div"); row.className = "mdv-prop";
       var k = document.createElement("span"); k.className = "mdv-prop-key"; k.textContent = e.key;
       var v = document.createElement("span"); v.className = "mdv-prop-val";
       if (e.items) {
         e.items.forEach(function (it) {
-          var chip = document.createElement("span"); chip.className = "mdv-prop-chip"; chip.textContent = it; v.appendChild(chip);
+          var chip = document.createElement("span");
+          chip.className = "mdv-prop-chip mdv-chip-" + (ci++ % 6);
+          chip.textContent = it; v.appendChild(chip);
         });
       } else {
         v.textContent = e.value;

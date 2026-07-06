@@ -7,6 +7,7 @@
   --bar-bg: #f0f2f5;
   --bar-fg: #57606a;
   --border: #d0d7de;
+  --mdv-red: #cc0000;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -15,6 +16,7 @@
     --bar-bg: #161b22;
     --bar-fg: #8b949e;
     --border: #30363d;
+    --mdv-red: #ff4d4d;
   }
 }
 
@@ -90,7 +92,15 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   border-radius: 999px;
   line-height: 1.5;
   white-space: nowrap;
+  color: var(--color-fg-default, currentColor);
 }
+/* Deterministic colour variants — red / black / greys, filled + outline. */
+.markdown-body .mdv-chip-0 { color: var(--mdv-red); border-color: var(--mdv-red); }                 /* red outline */
+.markdown-body .mdv-chip-1 { color: var(--color-fg-default, currentColor); border-color: var(--color-fg-default, currentColor); } /* black outline */
+.markdown-body .mdv-chip-2 { color: var(--bar-fg); border-color: var(--border); background: var(--bar-bg); }  /* grey fill */
+.markdown-body .mdv-chip-3 { color: var(--bar-fg); border-color: var(--bar-fg); }                   /* grey outline */
+.markdown-body .mdv-chip-4 { color: var(--bg); background: var(--mdv-red); border-color: var(--mdv-red); }    /* red fill */
+.markdown-body .mdv-chip-5 { color: var(--bg); background: var(--color-fg-default, currentColor); border-color: var(--color-fg-default, currentColor); } /* black fill */
 @media (max-width: 640px) {
   .markdown-body .mdv-prop { grid-template-columns: 1fr; gap: 3px; }
 }
