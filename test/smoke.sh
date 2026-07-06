@@ -48,6 +48,14 @@ fi
 
 rm -f "$out"
 
+# 6. Frontmatter: parser unit test passes and the splitter is wired into the build.
+if node "$ROOT/test/frontmatter.test.mjs" >/dev/null 2>&1; then
+  pass "frontmatter parser unit test"
+else
+  die "frontmatter parser unit test failed"
+fi
+grep -q "splitFrontmatter" "$ROOT/viewer.html" && pass "frontmatter splitter inlined" || die "frontmatter splitter not inlined"
+
 if [ "$fail" -ne 0 ]; then
   echo "==> SMOKE TEST FAILED"
   exit 1

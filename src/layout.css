@@ -7,6 +7,7 @@
   --bar-bg: #f0f2f5;
   --bar-fg: #57606a;
   --border: #d0d7de;
+  --mdv-red: #cc0000;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -15,6 +16,7 @@
     --bar-bg: #161b22;
     --bar-fg: #8b949e;
     --border: #30363d;
+    --mdv-red: #ff4d4d;
   }
 }
 
@@ -60,6 +62,47 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   max-width: 900px;
   margin: 0 auto;
   padding: 28px 32px;
+}
+
+/* Frontmatter / Properties panel */
+.markdown-body .mdv-properties {
+  margin: 0 0 24px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+.markdown-body .mdv-prop {
+  display: grid;
+  grid-template-columns: minmax(90px, 22%) 1fr;
+  gap: 12px;
+  padding: 7px 2px;
+  align-items: baseline;
+}
+.markdown-body .mdv-prop + .mdv-prop { border-top: 1px solid var(--border); }
+.markdown-body .mdv-prop-key { color: var(--bar-fg); word-break: break-word; }
+.markdown-body .mdv-prop-val { word-break: break-word; }
+.markdown-body .mdv-prop-empty::after { content: "—"; color: var(--bar-fg); }
+.markdown-body .mdv-prop-chip {
+  display: inline-block;
+  margin: 0 5px 5px 0;
+  padding: 2px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--color-fg-default, currentColor);
+}
+/* Deterministic colour variants — red / black / greys, filled + outline. */
+.markdown-body .mdv-chip-0 { color: var(--mdv-red); border-color: var(--mdv-red); }                 /* red outline */
+.markdown-body .mdv-chip-1 { color: var(--color-fg-default, currentColor); border-color: var(--color-fg-default, currentColor); } /* black outline */
+.markdown-body .mdv-chip-2 { color: var(--bar-fg); border-color: var(--border); background: var(--bar-bg); }  /* grey fill */
+.markdown-body .mdv-chip-3 { color: var(--bar-fg); border-color: var(--bar-fg); }                   /* grey outline */
+.markdown-body .mdv-chip-4 { color: var(--bg); background: var(--mdv-red); border-color: var(--mdv-red); }    /* red fill */
+.markdown-body .mdv-chip-5 { color: var(--bg); background: var(--color-fg-default, currentColor); border-color: var(--color-fg-default, currentColor); } /* black fill */
+@media (max-width: 640px) {
+  .markdown-body .mdv-prop { grid-template-columns: 1fr; gap: 3px; }
 }
 
 /* Raw pane */
