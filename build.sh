@@ -20,7 +20,7 @@ for f in "$SRC/head.html" "$SRC/body.html" "$SRC/layout.css" "$SRC/app.js" \
          "$VENDOR/github-markdown.css" "$VENDOR/hljs-github-light.css" \
          "$VENDOR/hljs-github-dark.css" "$VENDOR/marked.min.js" \
          "$VENDOR/highlight.min.js" "$VENDOR/markdown.min.js" \
-         "$VENDOR/dompurify.min.js"; do
+         "$VENDOR/dompurify.min.js" "CHANGELOG.md"; do
   [ -f "$f" ] || { echo "build.sh: missing $f" >&2; exit 1; }
 done
 
@@ -87,7 +87,20 @@ emit_web() {
   local readme_b64; readme_b64=$(base64 < README.md | tr -d '\n')
   awk -v r="$readme_b64" '{ gsub(/__README_B64__/, r); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
 
-  echo "build.sh: wrote $out ($(wc -c < "$out" | tr -d ' ') bytes)"
+  # Embed CHANGELOG.md so the footer "changelog" button renders it in the viewer.
+  local changelog_b64; changelog_b64=$(base64 < CHANGELOG.md | tr -d '\n')
+  awk -v c="$changelog_b64" '{ gsub(/__CHANGELOG_B64__/, c); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+
+  # Footer version tag + short SHA — single-sourced from CHANGELOG.md's top entry
+  # (line: "## v0.3.0 — 2026-07-06 · `fd8af50`"). No live git SHA → no diff churn.
+  local top_ver top_sha
+  top_ver=$(grep -m1 -oE '^## v[0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | awk '{print $2}')
+  top_sha=$(grep -m1 -oE '`[0-9a-f]{7,40}`' CHANGELOG.md | tr -d '`')
+  : "${top_ver:=v0.0.0}"; : "${top_sha:=unknown}"
+  awk -v v="$top_ver" -v s="$top_sha" \
+      '{ gsub(/__APP_VERSION__/, v); gsub(/__APP_SHA__/, s); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+
+  echo "build.sh: wrote $out ($(wc -c < "$out" | tr -d ' ') bytes) — $top_ver $top_sha"
 }
 
 emit_finder
