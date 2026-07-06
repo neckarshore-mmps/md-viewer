@@ -7,7 +7,7 @@ means the shape can still move. Each release links the pull requests it contains
 
 ## v0.3.1 — 2026-07-06
 
-**Footer legibility + privacy claim** · `__PENDING_SHA__`
+**Footer legibility + privacy claim** · `5411938`
 
 - Footer text lifted off `--muted` (blended toward `--fg`) so it clears WCAG AA
   on every theme — the low grey-on-black contrast was a Lighthouse flag. Size
