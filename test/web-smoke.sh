@@ -59,6 +59,9 @@ for lib in marked DOMPurify hljs; do
 done
 
 # Finder tool untouched + still green.
+grep -q "splitFrontmatter" "$OUT" && pass "frontmatter splitter inlined" || die "frontmatter splitter not inlined"
+grep -q "mdv-properties" "$OUT" && pass "properties panel styled" || die "properties panel CSS missing"
+
 echo "==> delegating to Finder smoke test"
 "$ROOT/test/smoke.sh" >/dev/null && pass "Finder smoke test passes" || die "Finder smoke test failed"
 

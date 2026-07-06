@@ -62,6 +62,39 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   padding: 28px 32px;
 }
 
+/* Frontmatter / Properties panel */
+.markdown-body .mdv-properties {
+  margin: 0 0 24px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+.markdown-body .mdv-prop {
+  display: grid;
+  grid-template-columns: minmax(90px, 22%) 1fr;
+  gap: 12px;
+  padding: 7px 2px;
+  align-items: baseline;
+}
+.markdown-body .mdv-prop + .mdv-prop { border-top: 1px solid var(--border); }
+.markdown-body .mdv-prop-key { color: var(--bar-fg); word-break: break-word; }
+.markdown-body .mdv-prop-val { word-break: break-word; }
+.markdown-body .mdv-prop-empty::after { content: "—"; color: var(--bar-fg); }
+.markdown-body .mdv-prop-chip {
+  display: inline-block;
+  margin: 0 5px 5px 0;
+  padding: 2px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .markdown-body .mdv-prop { grid-template-columns: 1fr; gap: 3px; }
+}
+
 /* Raw pane */
 .pane.right pre {
   margin: 0;
