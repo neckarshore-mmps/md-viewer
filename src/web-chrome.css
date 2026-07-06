@@ -97,17 +97,21 @@ body {
 
 /* ─── Footer (pinned to viewport bottom via flex column) ─────── */
 .foot {
-  flex: 0 0 var(--bar-h);
+  flex: 0 0 auto;
+  min-height: var(--bar-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 16px;
+  /* extra bottom breathing room so a floating OS overlay (e.g. Wispr)
+     doesn't sit on top of the footer text */
+  padding: 6px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
-  color: var(--muted);
+  /* lift contrast off --muted: blend it toward --fg so it clears WCAG AA */
+  color: color-mix(in srgb, var(--muted) 45%, var(--fg));
   border-top: var(--bw) solid var(--line);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.04em;
   white-space: nowrap;
   user-select: none;
@@ -143,6 +147,20 @@ body {
 @media (max-width: 640px) {
   .foot-hints { display: none; }
   .foot { justify-content: flex-end; }
+}
+
+/* Privacy assurance — subtle, low-frequency red pulse (never hectic) */
+.foot .foot-priv {
+  color: var(--mdv-red, #ff3b30);
+  font-weight: 600;
+  animation: foot-priv-pulse 5s ease-in-out infinite;
+}
+@keyframes foot-priv-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .foot .foot-priv { animation: none; }
 }
 
 /* ─── Drag-and-drop overlay ──────────────────────────────────── */
@@ -183,7 +201,7 @@ body {
     height: var(--divider-w);
     cursor: row-resize;
   }
-  .foot { font-size: 10px; letter-spacing: 0.02em; }
+  .foot { font-size: 11px; letter-spacing: 0.02em; }
   .foot .sep { margin: 0 5px; }
   .grid-rail { display: none !important; }
 }
