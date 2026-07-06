@@ -5,6 +5,20 @@ All notable changes to **md-viewer**. Format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0 (`0.x`)
 means the shape can still move. Each release links the pull requests it contains.
 
+## v0.3.1 — 2026-07-06
+
+**Footer legibility + privacy claim** · `__PENDING_SHA__`
+
+- Footer text lifted off `--muted` (blended toward `--fg`) so it clears WCAG AA
+  on every theme — the low grey-on-black contrast was a Lighthouse flag. Size
+  bumped to 12px, with extra bottom padding so a floating OS overlay no longer
+  sits on the footer. ([#13](https://github.com/neckarshore-mmps/md-viewer/pull/13))
+- Footer privacy note now reads **nothing is uploaded. everything locally
+  rendered.**, in red with a subtle 5s low-frequency pulse (honours
+  `prefers-reduced-motion`). ([#13](https://github.com/neckarshore-mmps/md-viewer/pull/13))
+- The same claim now appears prominently near the top of the **How it works**
+  page. ([#14](https://github.com/neckarshore-mmps/md-viewer/pull/14))
+
 ## v0.3.0 — 2026-07-06
 
 **Obsidian frontmatter support** · `fd8af50`
