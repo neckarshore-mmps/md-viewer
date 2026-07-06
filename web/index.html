@@ -203,7 +203,8 @@ body {
   flex: 0 0 var(--bar-h);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 0 16px;
   background: var(--surface);
   color: var(--muted);
@@ -212,11 +213,40 @@ body {
   font-size: 11px;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   user-select: none;
 }
 .foot .sep { color: var(--accent); margin: 0 8px; }
+.foot-hints { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.foot-ver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.foot-link {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.foot-link:hover { color: var(--accent); }
+.foot-ver .ver-tag { color: var(--fg); }
+.foot-ver .ver-sha {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  background: var(--bg);
+  border: var(--bw) solid var(--line);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+@media (max-width: 640px) {
+  .foot-hints { display: none; }
+  .foot { justify-content: flex-end; }
+}
 
 /* ─── Drag-and-drop overlay ──────────────────────────────────── */
 .drop-overlay {
@@ -498,7 +528,14 @@ body {
   </div>
 </main>
 
-<footer class="foot" id="foot">Drop a .md<span class="sep">·</span>paste ⌘V / Ctrl+V<span class="sep">·</span>choose a file<span class="sep">·</span>rendered left, source right<span class="sep">·</span>nothing is uploaded</footer>
+<footer class="foot" id="foot">
+  <span class="foot-hints">Drop a .md<span class="sep">·</span>paste ⌘V / Ctrl+V<span class="sep">·</span>choose a file<span class="sep">·</span>rendered left, source right<span class="sep">·</span>nothing is uploaded</span>
+  <span class="foot-ver">
+    <button class="foot-link" id="changelog" type="button">changelog</button>
+    <span class="ver-tag">v0.3.0</span>
+    <code class="ver-sha">fd8af50</code>
+  </span>
+</footer>
 
 <div class="drop-overlay" id="dropOverlay"><div class="drop-inner">Drop to open ⬇︎</div></div>
 <script>
@@ -1782,6 +1819,7 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
   }
 
   var README = b64ToUtf8(README_B64);
+  var CHANGELOG = b64ToUtf8("IyBDaGFuZ2Vsb2cKCkFsbCBub3RhYmxlIGNoYW5nZXMgdG8gKiptZC12aWV3ZXIqKi4gRm9ybWF0IGZvbGxvd3MKW0tlZXAgYSBDaGFuZ2Vsb2ddKGh0dHBzOi8va2VlcGFjaGFuZ2Vsb2cuY29tL2VuLzEuMS4wLyk7IHZlcnNpb25zIGZvbGxvdwpbU2VtYW50aWMgVmVyc2lvbmluZ10oaHR0cHM6Ly9zZW12ZXIub3JnL3NwZWMvdjIuMC4wLmh0bWwpLiBQcmUtMS4wIChgMC54YCkKbWVhbnMgdGhlIHNoYXBlIGNhbiBzdGlsbCBtb3ZlLiBFYWNoIHJlbGVhc2UgbGlua3MgdGhlIHB1bGwgcmVxdWVzdHMgaXQgY29udGFpbnMuCgojIyB2MC4zLjAg4oCUIDIwMjYtMDctMDYKCioqT2JzaWRpYW4gZnJvbnRtYXR0ZXIgc3VwcG9ydCoqIMK3IGBmZDhhZjUwYAoKLSBZQU1MIGZyb250bWF0dGVyICh0aGUgbGVhZGluZyBgLS0tIOKApiAtLS1gIGJsb2NrIGZyb20gT2JzaWRpYW4sIEpla3lsbCBhbmQKICBIdWdvKSBpcyBubyBsb25nZXIgcmVuZGVyZWQgYXMgYSBnaWFudCBoZWFkaW5nIOKAlCBpdCBpcyBwYXJzZWQgYW5kIHNob3duIGFzIGEKICB0eXBlZCAqKlByb3BlcnRpZXMgcGFuZWwqKiBhYm92ZSB0aGUgZG9jdW1lbnQuIChbIzEwXShodHRwczovL2dpdGh1Yi5jb20vbmVja2Fyc2hvcmUtbW1wcy9tZC12aWV3ZXIvcHVsbC8xMCkpCi0gTGlzdCBwcm9wZXJ0aWVzIChgdGFnc2AsIGBhbGlhc2VzYCwg4oCmKSByZW5kZXIgYXMgKipjb2xvdXItdmFyaWVkIGNoaXBzKiog4oCUCiAgcmVkIC8gYmxhY2sgLyBncmV5LCBmaWxsZWQgYW5kIG91dGxpbmVkLCBkcml2ZW4gYnkgdGhlIGFjdGl2ZSB0aGVtZS4gKFsjMTBdKGh0dHBzOi8vZ2l0aHViLmNvbS9uZWNrYXJzaG9yZS1tbXBzL21kLXZpZXdlci9wdWxsLzEwKSkKLSBUaGUgcmF3IHNvdXJjZSBwYW5lIHN0aWxsIHNob3dzIHRoZSBmdWxsIGRvY3VtZW50LCBgLS0tYCBibG9jayBpbmNsdWRlZC4KCiMjIHYwLjIuMCDigJQgMjAyNi0wNy0wNQoKKipPcGVuIHNvdXJjZSoqIMK3IGBjMzNiZmIxYAoKLSBNSVQgYExJQ0VOU0VgIGFuZCB0aGlyZC1wYXJ0eSBhdHRyaWJ1dGlvbiBhZGRlZCBmb3IgdGhlIHB1YmxpYyBmbGlwLiAoWyM5XShodHRwczovL2dpdGh1Yi5jb20vbmVja2Fyc2hvcmUtbW1wcy9tZC12aWV3ZXIvcHVsbC85KSkKCiMjIHYwLjEuMCDigJQgMjAyNi0wNy0wNQoKKipGaXJzdCBwdWJsaWMgd2ViIGFwcCoqIMK3IGBmMzVjYzgwYAoKLSBJbnRlcmFjdGl2ZSB3ZWIgdmlld2VyIHdpdGggc3BsaXQgcmVuZGVyZWQvc291cmNlIHZpZXcsIGRyYWctdG8tcmVzaXplLAogIHNjcm9sbCBzeW5jLCBkcmFnICYgZHJvcCwgcGFzdGUsIGFuZCBmaWxlLW9wZW4gZGlhbG9nLiAoWyMxXShodHRwczovL2dpdGh1Yi5jb20vbmVja2Fyc2hvcmUtbW1wcy9tZC12aWV3ZXIvcHVsbC8xKSkKLSBUaGVtZSBzeXN0ZW0gKE1pbmltYWxpc3QgLyBTd2lzcyBHcmlkKSB3aXRoIGxpZ2h0L2RhcmsgbW9kZXMgYW5kIGEgdGhlbWUKICBkcm9wZG93bi4gKFsjMl0oaHR0cHM6Ly9naXRodWIuY29tL25lY2thcnNob3JlLW1tcHMvbWQtdmlld2VyL3B1bGwvMiksIFsjM10oaHR0cHM6Ly9naXRodWIuY29tL25lY2thcnNob3JlLW1tcHMvbWQtdmlld2VyL3B1bGwvMyksIFsjNV0oaHR0cHM6Ly9naXRodWIuY29tL25lY2thcnNob3JlLW1tcHMvbWQtdmlld2VyL3B1bGwvNSkpCi0gU0VPIGJhc2VsaW5lOiBtZXRhIGRlc2NyaXB0aW9uLCBgcm9ib3RzLnR4dGAsIGBzaXRlbWFwLnhtbGAsIE9wZW4gR3JhcGgsCiAgSlNPTi1MRCwgY2Fub25pY2FsLCBkZXNjcmlwdGl2ZSB0aXRsZSwgYW5kIGEgYDxtYWluPmAgbGFuZG1hcmsuIChbIzRdKGh0dHBzOi8vZ2l0aHViLmNvbS9uZWNrYXJzaG9yZS1tbXBzL21kLXZpZXdlci9wdWxsLzQpLCBbIzVdKGh0dHBzOi8vZ2l0aHViLmNvbS9uZWNrYXJzaG9yZS1tbXBzL21kLXZpZXdlci9wdWxsLzUpKQotICJIb3cgaXQgd29ya3MiIHBhZ2Ugd2l0aCBuYXZpZ2F0aW9uIGxpbmsuIChbIzddKGh0dHBzOi8vZ2l0aHViLmNvbS9uZWNrYXJzaG9yZS1tbXBzL21kLXZpZXdlci9wdWxsLzcpLCBbIzhdKGh0dHBzOi8vZ2l0aHViLmNvbS9uZWNrYXJzaG9yZS1tbXBzL21kLXZpZXdlci9wdWxsLzgpKQotIENJIHNtb2tlLXRlc3QgZ2F0ZSBvbiBldmVyeSBQUi4gKFsjNl0oaHR0cHM6Ly9naXRodWIuY29tL25lY2thcnNob3JlLW1tcHMvbWQtdmlld2VyL3B1bGwvNikpCg==");
 
   // ─── Rendering ─────────────────────────────────────────────
   function render(md, name) {
@@ -1896,6 +1934,11 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
   // readme.md button + default document
   document.getElementById("readme").addEventListener("click", function () {
     render(README, "README.md");
+  });
+
+  // changelog (footer) — dogfooding: the release notes open in the viewer itself
+  document.getElementById("changelog").addEventListener("click", function () {
+    render(CHANGELOG, "CHANGELOG.md");
   });
 
   // ─── Drag & drop ───────────────────────────────────────────
