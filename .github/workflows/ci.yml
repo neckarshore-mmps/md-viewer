@@ -66,10 +66,13 @@ jobs:
           ./test/smoke.sh                   > /tmp/smoke.out       2>&1 || true
           ./test/web-smoke.sh               > /tmp/web-smoke.out   2>&1 || true
 
-      # Pinned to the full commit SHA of test-stats-action (Phase-2 hardened, MASCHIN PIR
-      # PASS 2026-07-08). Third-party actions are SHA-pinned, never tag-floated.
+      # Pinned to the full commit SHA of test-stats-action. Third-party actions are
+      # SHA-pinned, never tag-floated. This bumps off 7a53ad0d, whose action.yml embedded a
+      # load-time `${{ job.status }}` in an input description — it failed the manifest load on
+      # this repo's first real push:main emit (producer-#1 failure, red run 28916233257, no
+      # stats.json written). Fixed + regression-locked in test-stats-action#3.
       - name: Emit stats.json
-        uses: neckarshore-ai/test-stats-action@7a53ad0d782a43bf9acf026486de5c72efaff3d7
+        uses: neckarshore-ai/test-stats-action@edccf5c9266871f11d60d82509ab21e312e975cb
         with:
           repo: ${{ github.repository }}
           out: stats.json
