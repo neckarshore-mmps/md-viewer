@@ -5,6 +5,15 @@ on:
     branches: [main]
   push:
     branches: [main]
+    # Break the emit commit-loop: a stats.json-only commit (pushed by emit-stats below)
+    # must not re-trigger this workflow. paths-ignore is cleaner than a [skip ci] message
+    # convention (no fragile string-matching) — stats-json-contract adoption, Phase 3.
+    paths-ignore:
+      - 'stats.json'
+
+# Least-privilege by default; emit-stats re-grants contents:write for its job only.
+permissions:
+  contents: read
 
 jobs:
   smoke:
@@ -23,3 +32,83 @@ jobs:
 
       - name: Smoke tests (web + Finder)
         run: ./test/web-smoke.sh
+
+  # Estate stats.json producer (test-scope facet). Emits a contract-conformant stats.json
+  # to main on every push:main, AFTER the smoke gate. Runs even when smoke fails
+  # (if: always) so a non-green run emits red:true — never a stale-green count
+  # (stats-json-contract §1). contents:write is scoped to THIS job only; the workflow-level
+  # paths-ignore on stats.json breaks the re-trigger loop.
+  emit-stats:
+    needs: smoke
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      # Serialize emits so two rapid pushes cannot race on the git push to main.
+      group: emit-stats-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x build.sh bin/mdview test/smoke.sh test/web-smoke.sh
+
+      # Capture each suite's OWN reporter output separately. CI's gate prints only
+      # web-smoke's 33 ok-lines (smoke.sh + frontmatter run as suppressed rollups inside
+      # it); running the three independently exposes the disjoint cascade the contract
+      # counts: web-smoke 33 (e2e) + smoke 13 (integration) + frontmatter 8 (unit) = 54.
+      # `|| true`: on a red run the reporter is still captured (fewer ok-lines) — the run
+      # is flagged red via test_result below and excluded downstream, never counted green.
+      - name: Capture reporter output (three disjoint suites)
+        run: |
+          node test/frontmatter.test.mjs   > /tmp/frontmatter.out 2>&1 || true
+          ./test/smoke.sh                   > /tmp/smoke.out       2>&1 || true
+          ./test/web-smoke.sh               > /tmp/web-smoke.out   2>&1 || true
+
+      # Pinned to the full commit SHA of test-stats-action (Phase-2 hardened, MASCHIN PIR
+      # PASS 2026-07-08). Third-party actions are SHA-pinned, never tag-floated.
+      - name: Emit stats.json
+        uses: neckarshore-ai/test-stats-action@7a53ad0d782a43bf9acf026486de5c72efaff3d7
+        with:
+          repo: ${{ github.repository }}
+          out: stats.json
+          sha: ${{ github.sha }}
+          test_result: ${{ needs.smoke.result }}
+          runners: |
+            unit:node:/tmp/frontmatter.out
+            integration:bash:/tmp/smoke.out
+            e2e:bash:/tmp/web-smoke.out
+
+      # Structural contract gate — invariants that hold on BOTH green and red runs
+      # (total == sum(byType); declared held separate; red is boolean; sha present).
+      # Deliberately does NOT assert the golden 54: a red run legitimately undercounts
+      # and must still emit (red:true), so a hard-coded 54 here would block the red emit.
+      - name: Validate emitted stats.json against the contract
+        run: |
+          jq -e --arg repo "$GITHUB_REPOSITORY" '
+            .repo == $repo
+            and (.audited_sha | type == "string" and length > 0)
+            and (.tests.total == ([.tests.byType[]] | add))
+            and (.tests.declared == {})
+            and (.red | type == "boolean")
+          ' stats.json > /dev/null \
+            || { echo "::error::stats.json failed contract validation"; cat stats.json; exit 1; }
+          echo "stats.json is contract-valid:"; cat stats.json
+
+      # Diff-guard on the meaningful fields only (everything EXCEPT the always-changing
+      # updatedAt). A new push has a new audited_sha -> commit (keeps the number fresh);
+      # a workflow re-run on the same sha differs only by timestamp -> no churn commit.
+      - name: Commit stats.json to main when it changed
+        run: |
+          norm() { jq -S 'del(.updatedAt)' "$1" 2>/dev/null; }
+          if git show HEAD:stats.json > /tmp/prev-stats.json 2>/dev/null \
+             && [ "$(norm /tmp/prev-stats.json)" = "$(norm stats.json)" ]; then
+            echo "stats.json unchanged (ignoring timestamp) — nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add stats.json
+          git commit -m "chore(stats): emit stats.json @ ${GITHUB_SHA:0:7}"
+          git push origin HEAD:main
