@@ -54,28 +54,7 @@
     try { hljs.highlightElement(codeEl); } catch (e) { /* fall back to plain text */ }
   }
 
-  // Draggable divider
-  var divider = document.getElementById("divider");
-  var left = document.querySelector(".pane.left");
-  var split = document.querySelector(".split");
-  var dragging = false;
-
-  divider.addEventListener("mousedown", function (e) {
-    dragging = true;
-    document.body.style.cursor = "col-resize";
-    e.preventDefault();
-  });
-  window.addEventListener("mousemove", function (e) {
-    if (!dragging) return;
-    var rect = split.getBoundingClientRect();
-    var pct = ((e.clientX - rect.left) / rect.width) * 100;
-    pct = Math.max(15, Math.min(85, pct));
-    left.style.flex = "0 0 " + pct + "%";
-  });
-  window.addEventListener("mouseup", function () {
-    dragging = false;
-    document.body.style.cursor = "";
-  });
+  // Divider drag + mobile tabs now live in the shared src/split-view.js module.
 
   // ─── Relative URL rewriting (Finder tool only — needs a source dir) ────────
   // Walk the rendered tree and repoint relative <img src> / <a href> at the

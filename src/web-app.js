@@ -230,32 +230,10 @@
     }
   });
 
-  // ─── Draggable divider (axis-aware: horizontal desktop, vertical mobile) ──
-  var divider = document.getElementById("divider");
-  var left = document.querySelector(".pane.left");
-  var mq = window.matchMedia("(max-width: 640px)");
-  var dragging = false;
-
-  divider.addEventListener("pointerdown", function (e) {
-    dragging = true; divider.setPointerCapture(e.pointerId);
-    document.body.style.cursor = mq.matches ? "row-resize" : "col-resize";
-    e.preventDefault();
-  });
-  divider.addEventListener("pointermove", function (e) {
-    if (!dragging) return;
-    var rect = split.getBoundingClientRect();
-    var pct = mq.matches
-      ? ((e.clientY - rect.top) / rect.height) * 100
-      : ((e.clientX - rect.left) / rect.width) * 100;
-    pct = Math.max(15, Math.min(85, pct));
-    left.style.flex = "0 0 " + pct + "%";
-  });
-  divider.addEventListener("pointerup", function (e) {
-    dragging = false; document.body.style.cursor = "";
-    try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
-  });
+  // Divider drag + mobile tabs now live in the shared src/split-view.js module.
 
   // ─── Proportional scroll sync between the two panes ────────
+  var left = document.querySelector(".pane.left");
   var right = document.querySelector(".pane.right");
   var syncing = false;
   function syncFrom(src, dst) {

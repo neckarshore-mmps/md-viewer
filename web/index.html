@@ -2046,32 +2046,10 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
     }
   });
 
-  // ─── Draggable divider (axis-aware: horizontal desktop, vertical mobile) ──
-  var divider = document.getElementById("divider");
-  var left = document.querySelector(".pane.left");
-  var mq = window.matchMedia("(max-width: 640px)");
-  var dragging = false;
-
-  divider.addEventListener("pointerdown", function (e) {
-    dragging = true; divider.setPointerCapture(e.pointerId);
-    document.body.style.cursor = mq.matches ? "row-resize" : "col-resize";
-    e.preventDefault();
-  });
-  divider.addEventListener("pointermove", function (e) {
-    if (!dragging) return;
-    var rect = split.getBoundingClientRect();
-    var pct = mq.matches
-      ? ((e.clientY - rect.top) / rect.height) * 100
-      : ((e.clientX - rect.left) / rect.width) * 100;
-    pct = Math.max(15, Math.min(85, pct));
-    left.style.flex = "0 0 " + pct + "%";
-  });
-  divider.addEventListener("pointerup", function (e) {
-    dragging = false; document.body.style.cursor = "";
-    try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
-  });
+  // Divider drag + mobile tabs now live in the shared src/split-view.js module.
 
   // ─── Proportional scroll sync between the two panes ────────
+  var left = document.querySelector(".pane.left");
   var right = document.querySelector(".pane.right");
   var syncing = false;
   function syncFrom(src, dst) {
@@ -2088,6 +2066,45 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
 
   // ─── Initial document = repo README ────────────────────────
   render(README, "README.md");
+})();
+</script>
+<script>
+/* mdv-split-view — shared divider/tab controller for both build targets.
+   Self-initializes on load by DOM query. Desktop: drag the divider to resize.
+   (Edge-collapse, double-click reset, keyboard a11y and mobile tabs are layered
+   on in later tasks.) ES5-only to match the codebase. */
+(function () {
+  var split = document.querySelector(".split");
+  var divider = document.getElementById("divider");
+  var left = document.querySelector(".pane.left");
+  if (!split || !divider || !left) return;
+
+  var pct = 50;
+  function render(p) {
+    p = Math.max(15, Math.min(85, p));       // baseline clamp (Task 2 removes it)
+    pct = p;
+    left.style.flex = "0 0 " + p + "%";
+  }
+
+  var dragging = false;
+  divider.addEventListener("pointerdown", function (e) {
+    dragging = true;
+    try { divider.setPointerCapture(e.pointerId); } catch (err) {}
+    document.body.style.cursor = "col-resize";
+    e.preventDefault();
+  });
+  divider.addEventListener("pointermove", function (e) {
+    if (!dragging) return;
+    var rect = split.getBoundingClientRect();
+    render(((e.clientX - rect.left) / rect.width) * 100);
+  });
+  divider.addEventListener("pointerup", function (e) {
+    dragging = false;
+    document.body.style.cursor = "";
+    try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
+  });
+
+  render(50);
 })();
 </script>
 </body>

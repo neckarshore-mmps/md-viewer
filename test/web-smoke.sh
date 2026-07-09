@@ -58,6 +58,10 @@ for lib in marked DOMPurify hljs; do
   grep -q "$lib" "$OUT" && pass "$lib inlined" || die "$lib not inlined"
 done
 
+# Shared split-view module inlined into both targets.
+grep -q "mdv-split-view" "$OUT" && pass "split-view inlined (web)" || die "split-view.js not inlined in web/index.html"
+grep -q "mdv-split-view" "$ROOT/viewer.html" && pass "split-view inlined (finder)" || die "split-view.js not inlined in viewer.html"
+
 # Finder tool untouched + still green.
 grep -q "splitFrontmatter" "$OUT" && pass "frontmatter splitter inlined" || die "frontmatter splitter not inlined"
 
