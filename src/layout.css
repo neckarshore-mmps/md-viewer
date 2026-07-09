@@ -55,6 +55,12 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   cursor: col-resize;
 }
 .divider:hover { background: #3b82f6; }
+/* Collapsed to an extreme: pinned red bar, widened hit area, subtle glow. */
+.divider.edge {
+  background: var(--mdv-red);
+  flex-basis: 8px;
+  box-shadow: 0 0 0 1px var(--mdv-red), 0 0 14px rgba(204, 0, 0, 0.5);
+}
 
 /* Rendered pane */
 .markdown-body {

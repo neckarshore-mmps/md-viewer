@@ -94,6 +94,12 @@ body {
   cursor: col-resize;
 }
 .divider:hover { background: var(--accent); }
+/* Collapsed to an extreme: pinned red bar, widened hit area, subtle glow. */
+.divider.edge {
+  background: var(--accent);
+  flex-basis: 8px;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
+}
 
 /* ─── Footer (pinned to viewport bottom via flex column) ─────── */
 .foot {

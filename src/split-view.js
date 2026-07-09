@@ -8,11 +8,14 @@
   var left = document.querySelector(".pane.left");
   if (!split || !divider || !left) return;
 
+  var SNAP = 6;
   var pct = 50;
   function render(p) {
-    p = Math.max(15, Math.min(85, p));       // baseline clamp (Task 2 removes it)
+    p = Math.max(0, Math.min(100, p));
+    if (p < SNAP) p = 0; else if (p > 100 - SNAP) p = 100;
     pct = p;
     left.style.flex = "0 0 " + p + "%";
+    divider.classList.toggle("edge", p === 0 || p === 100);
   }
 
   var dragging = false;
