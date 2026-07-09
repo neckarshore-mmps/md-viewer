@@ -7,7 +7,7 @@ means the shape can still move. Each release links the pull requests it contains
 
 ## v0.4.0 — 2026-07-09
 
-**Relative images & links resolve in the Finder tool** · `0000000`
+**Relative images & links resolve in the Finder tool** · `3d1ab67`
 
 - A `.md` opened via the Finder tool (`mdview`) renders in a temp dir, so a
   relative `![](./img.png)` or `[link](./other.md)` used to 404. `mdview` now
