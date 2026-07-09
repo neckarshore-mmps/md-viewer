@@ -20,7 +20,9 @@ echo "==> md-viewer smoke test"
 grep -q "__MD_BASE64__" "$ROOT/viewer.html" && pass "template has MD placeholder" || die "MD placeholder missing"
 grep -q "__MD_FILENAME_B64__" "$ROOT/viewer.html" && pass "template has filename placeholder" || die "filename placeholder missing"
 grep -q "__MD_BASEDIR_B64__" "$ROOT/viewer.html" && pass "template has base-dir placeholder" || die "base-dir placeholder missing"
+grep -q "__MD_ROOT_B64__" "$ROOT/viewer.html" && pass "template has containment-root placeholder" || die "containment-root placeholder missing"
 grep -q "resolveRelativeUrl" "$ROOT/viewer.html" && pass "relative-URL resolver inlined" || die "relative-URL resolver not inlined"
+grep -q "isUnder" "$ROOT/viewer.html" && pass "containment check inlined" || die "containment check not inlined"
 
 # 2. Vendored libs must be inlined (offline / self-contained).
 grep -q "marked" "$ROOT/viewer.html" && pass "marked inlined" || die "marked not inlined"
@@ -31,7 +33,7 @@ grep -q "markdown-body" "$ROOT/viewer.html" && pass "github-markdown css inlined
 # 3. mdview must generate output with placeholders resolved.
 out="$(MDVIEW_NO_OPEN=1 "$ROOT/bin/mdview" "$FIXTURE")"
 [ -f "$out" ] && pass "mdview generated $out" || die "mdview produced no output"
-if grep -q "__MD_BASE64__\|__MD_FILENAME_B64__\|__MD_BASEDIR_B64__" "$out"; then
+if grep -q "__MD_BASE64__\|__MD_FILENAME_B64__\|__MD_BASEDIR_B64__\|__MD_ROOT_B64__" "$out"; then
   die "unresolved placeholders remain in output"
 else
   pass "all placeholders resolved"

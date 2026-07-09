@@ -57,8 +57,8 @@ jobs:
       # Capture each suite's OWN reporter output separately. CI's gate prints only
       # web-smoke's ok-lines (smoke.sh + the unit tests run as suppressed rollups inside
       # it); running each independently exposes the disjoint cascade the contract
-      # counts: web-smoke 33 (e2e) + smoke 17 (integration) + frontmatter 8 (unit)
-      # + url-resolve 15 (unit) = 73.
+      # counts: web-smoke 33 (e2e) + smoke 19 (integration) + frontmatter 8 (unit)
+      # + url-resolve 19 (unit) = 79.
       # `|| true`: on a red run the reporter is still captured (fewer ok-lines) — the run
       # is flagged red via test_result below and excluded downstream, never counted green.
       - name: Capture reporter output (four disjoint suites)
