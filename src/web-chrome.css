@@ -214,7 +214,8 @@ body {
   }
   .bar #filename { max-width: 100%; }
   .nav-right { margin-left: 0; }
-  .viewtabs { display: flex; }
+  .stage { flex-direction: column; }
+  .viewtabs { display: flex; flex: 0 0 auto; }
   .divider { display: none; }
   .split { flex-direction: column; }
   .split .pane { display: none; }
