@@ -27,15 +27,22 @@ fi
 md_b64="$(base64 < "$file" | tr -d '\n')"
 name_b64="$(printf '%s' "$(basename "$file")" | base64 | tr -d '\n')"
 
+# Absolute directory of the source file. The generated HTML lives in a temp dir,
+# so relative image/link URLs (`![](./img.png)`) would resolve against /tmp and
+# 404. We pass the real source dir in so app.js can rewrite them to file://
+# absolute against it. base64 keeps spaces/unicode in the path HTML/JS-safe.
+srcdir="$(cd "$(dirname "$file")" && pwd)"
+dir_b64="$(printf '%s' "$srcdir" | base64 | tr -d '\n')"
+
 # Output into a temp dir, filename-based so the browser tab reads nicely.
 # Explicit XXXXXX template so it works on both BSD (macOS) and GNU (Linux CI) mktemp.
 tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mdview.XXXXXX")"
 out="$tmpdir/$(basename "$file").html"
 
-# Replace both placeholders. base64 output never contains '&' or '\', so awk's
-# gsub replacement string is safe from special-character interpretation.
-awk -v md="$md_b64" -v nm="$name_b64" '
-  { gsub(/__MD_BASE64__/, md); gsub(/__MD_FILENAME_B64__/, nm); print }
+# Replace all three placeholders. base64 output never contains '&' or '\', so
+# awk's gsub replacement string is safe from special-character interpretation.
+awk -v md="$md_b64" -v nm="$name_b64" -v dir="$dir_b64" '
+  { gsub(/__MD_BASE64__/, md); gsub(/__MD_FILENAME_B64__/, nm); gsub(/__MD_BASEDIR_B64__/, dir); print }
 ' "$TEMPLATE" > "$out"
 
 # MDVIEW_NO_OPEN=1 skips launching the browser (used by tests / scripting) and
