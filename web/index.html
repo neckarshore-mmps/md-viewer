@@ -157,10 +157,16 @@ body {
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 
+/* Toolbar icons — flat Material inline-SVG, one size scale, colour via currentColor. */
+.btn svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+.btn .mode-icon { display: inline-flex; }
+.btn .mode-icon svg { width: 14px; height: 14px; }
+.btn svg.caret { width: 20px; height: 20px; opacity: 0.75; margin-left: -2px; }
+
 /* Theme dropdown (combobox with typeahead) */
 .theme-menu { position: relative; display: inline-flex; }
 .theme-menu-btn { display: inline-flex; align-items: center; gap: 8px; min-width: 108px; justify-content: space-between; }
-.theme-menu-btn .caret { font-size: 10px; opacity: 0.7; }
+.theme-menu-btn .caret { fill: currentColor; }
 .theme-menu-list {
   position: absolute; top: calc(100% + 4px); right: 0; z-index: 60;
   margin: 0; padding: 4px; list-style: none; min-width: 100%;
@@ -523,16 +529,22 @@ body {
 <nav class="bar">
   <span id="filename">README.md</span>
   <span class="controls">
-    <button class="btn" id="open" type="button">Open .md</button>
+    <button class="btn" id="open" type="button" title="Open .md">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>Open
+    </button>
     <input type="file" id="file" accept=".md,.markdown,.mdown,.mkd,.mdx,text/markdown" hidden>
-    <button class="btn" id="readme" type="button">readme.md</button>
-    <a class="btn" id="howto" href="/how-it-works">How it works</a>
+    <button class="btn" id="readme" type="button" title="Readme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.4 1 5.5v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 19.9 5.05 19.5 6.5 19.5c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V5.5c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>Readme
+    </button>
+    <a class="btn" id="howto" href="/how-it-works" title="How it works">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92c-.72.73-1.17 1.33-1.17 2.83h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>How it works
+    </a>
   </span>
   <span class="nav-right">
     <span class="theme-menu" id="themeMenu">
       <button class="btn theme-menu-btn" id="themeMenuBtn" type="button"
               aria-haspopup="listbox" aria-expanded="false">
-        <span class="theme-current">Swiss Grid</span><span class="caret">▾</span>
+        <span class="theme-current">Swiss Grid</span><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5l7 8 7-8z"/></svg>
       </button>
       <ul class="theme-menu-list" id="themeMenuList" role="listbox" aria-label="Theme" hidden>
         <li class="theme-opt" role="option" data-theme="minimalist">Minimalist</li>
@@ -2023,7 +2035,10 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
     if (m !== "light" && m !== "dark") m = "light";
     root.setAttribute("data-mode", m);
     try { localStorage.setItem("mdv-mode", m); } catch (e) {}
-    modeIcon.textContent = m === "dark" ? "☾" : "☀";
+    // Inline Material icons (dark_mode / light_mode) — offline, colour via currentColor.
+    var MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>';
+    var SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>';
+    modeIcon.innerHTML = m === "dark" ? MOON : SUN;
     modeLabel.textContent = m === "dark" ? "Dark" : "Light";
   }
   // Sync UI to the attributes the no-FOUC head script already set.

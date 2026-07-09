@@ -46,3 +46,13 @@ test("readme / changelog content swap", async ({ page }) => {
   await page.click("#readme");
   await expect(rendered, "readme view should render the README again").toContainText(/Markdown/i);
 });
+
+test("toolbar buttons each render a non-empty icon", async ({ page }) => {
+  for (const sel of ["#open", "#readme", "#howto", "#mode", "#themeMenuBtn"]) {
+    const svg = page.locator(`${sel} svg`).first();
+    await expect(svg, `${sel} should contain an svg`).toHaveCount(1);
+    const box = await svg.boundingBox();
+    expect(box && box.width > 0 && box.height > 0, `${sel} icon should be visible`).toBeTruthy();
+  }
+  await expect(page.locator("#readme")).toContainText("Readme");
+});

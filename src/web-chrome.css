@@ -54,10 +54,16 @@ body {
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 
+/* Toolbar icons — flat Material inline-SVG, one size scale, colour via currentColor. */
+.btn svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+.btn .mode-icon { display: inline-flex; }
+.btn .mode-icon svg { width: 14px; height: 14px; }
+.btn svg.caret { width: 20px; height: 20px; opacity: 0.75; margin-left: -2px; }
+
 /* Theme dropdown (combobox with typeahead) */
 .theme-menu { position: relative; display: inline-flex; }
 .theme-menu-btn { display: inline-flex; align-items: center; gap: 8px; min-width: 108px; justify-content: space-between; }
-.theme-menu-btn .caret { font-size: 10px; opacity: 0.7; }
+.theme-menu-btn .caret { fill: currentColor; }
 .theme-menu-list {
   position: absolute; top: calc(100% + 4px); right: 0; z-index: 60;
   margin: 0; padding: 4px; list-style: none; min-width: 100%;
