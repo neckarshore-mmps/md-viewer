@@ -1,0 +1,18 @@
+{
+  "name": "md-viewer",
+  "version": "0.4.0",
+  "description": "A no-dependency Markdown viewer for macOS Finder + a web app. This package.json exists ONLY for the dev-time Playwright e2e/security test layer; the shipped viewer.html / web/index.html stay self-contained and dependency-free.",
+  "private": true,
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "test:e2e": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neckarshore-mmps/md-viewer.git"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1"
+  }
+}

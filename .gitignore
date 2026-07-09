@@ -2,3 +2,8 @@
 test/_*.html
 .DS_Store
 .vercel
+
+# Dev-only test tooling (Playwright e2e) — never shipped
+node_modules/
+test-results/
+playwright-report/

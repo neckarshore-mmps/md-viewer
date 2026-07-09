@@ -33,6 +33,39 @@ jobs:
       - name: Smoke tests (web + Finder)
         run: ./test/web-smoke.sh
 
+  # Real-browser e2e + security layer (Playwright, Chromium only). Dev-only:
+  # never touches the shipped artifacts. Proves untrusted Markdown is interpreted
+  # safely (the window.__pwned probe grep cannot give) and click-through of the
+  # web app's controls. Gated like smoke; runs in parallel.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build self-contained artifacts (mdview needs viewer.html)
+        run: |
+          chmod +x build.sh bin/mdview
+          ./build.sh
+
+      - name: Install dependencies (exact, from lockfile)
+        run: npm ci
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-1.61.1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: e2e + security tests
+        run: npx playwright test
+
   # Estate stats.json producer (test-scope facet). Emits a contract-conformant stats.json
   # to main on every push:main, AFTER the smoke gate. Runs even when smoke fails
   # (if: always) so a non-green run emits red:true — never a stale-green count
