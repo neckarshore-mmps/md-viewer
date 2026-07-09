@@ -32,7 +32,10 @@
   </aside>
   <div class="split" id="split">
     <section class="pane left"><article id="rendered" class="rendered"></article></section>
-    <div class="divider" id="divider" title="Drag to resize"></div>
+    <div class="divider" id="divider" role="separator" aria-orientation="vertical"
+         aria-label="Resize panes" tabindex="0"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"
+         title="Drag · edge = full · double-click = 50/50"></div>
     <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
   </div>
 </main>

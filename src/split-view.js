@@ -10,12 +10,13 @@
 
   var SNAP = 6;
   var pct = 50;
-  function render(p) {
+  function render(p, noSnap) {
     p = Math.max(0, Math.min(100, p));
-    if (p < SNAP) p = 0; else if (p > 100 - SNAP) p = 100;
+    if (!noSnap) { if (p < SNAP) p = 0; else if (p > 100 - SNAP) p = 100; }
     pct = p;
     left.style.flex = "0 0 " + p + "%";
     divider.classList.toggle("edge", p === 0 || p === 100);
+    divider.setAttribute("aria-valuenow", String(Math.round(p)));
   }
 
   var dragging = false;
@@ -37,6 +38,17 @@
   });
 
   divider.addEventListener("dblclick", function () { render(50); });
+
+  divider.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k === "ArrowLeft") render(pct - 2, true);
+    else if (k === "ArrowRight") render(pct + 2, true);
+    else if (k === "Home") render(0);
+    else if (k === "End") render(100);
+    else if (k === "Enter" || k === " ") render(50);
+    else return;
+    e.preventDefault();
+  });
 
   render(50);
 })();

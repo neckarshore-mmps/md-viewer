@@ -39,3 +39,17 @@ test("double-click resets to ~50/50 and clears the edge", async ({ page }) => {
   expect(ratio).toBeGreaterThan(0.45);
   expect(ratio).toBeLessThan(0.55);
 });
+
+test("keyboard: End collapses, arrow restores, Enter resets", async ({ page }) => {
+  const divider = page.locator("#divider");
+  await divider.focus();
+  await page.keyboard.press("End");
+  await expect(divider).toHaveClass(/edge/);
+  expect(await divider.getAttribute("aria-valuenow")).toBe("100");
+
+  await page.keyboard.press("ArrowLeft");        // 100 → 98, off the edge
+  await expect(divider).not.toHaveClass(/edge/);
+
+  await page.keyboard.press("Enter");            // reset to 50
+  expect(await divider.getAttribute("aria-valuenow")).toBe("50");
+});

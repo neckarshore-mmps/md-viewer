@@ -1362,7 +1362,10 @@ body { display: flex; flex-direction: column; background: var(--bg); }
 </header>
 <div class="split">
   <section class="pane left"><article id="rendered" class="markdown-body"></article></section>
-  <div class="divider" id="divider" title="Ziehen zum Verschieben"></div>
+  <div class="divider" id="divider" role="separator" aria-orientation="vertical"
+       aria-label="Resize panes" tabindex="0"
+       aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"
+       title="Ziehen · Rand = voll · Doppelklick = 50/50"></div>
   <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
 </div>
 <script>
@@ -2816,12 +2819,13 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
 
   var SNAP = 6;
   var pct = 50;
-  function render(p) {
+  function render(p, noSnap) {
     p = Math.max(0, Math.min(100, p));
-    if (p < SNAP) p = 0; else if (p > 100 - SNAP) p = 100;
+    if (!noSnap) { if (p < SNAP) p = 0; else if (p > 100 - SNAP) p = 100; }
     pct = p;
     left.style.flex = "0 0 " + p + "%";
     divider.classList.toggle("edge", p === 0 || p === 100);
+    divider.setAttribute("aria-valuenow", String(Math.round(p)));
   }
 
   var dragging = false;
@@ -2843,6 +2847,17 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
   });
 
   divider.addEventListener("dblclick", function () { render(50); });
+
+  divider.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k === "ArrowLeft") render(pct - 2, true);
+    else if (k === "ArrowRight") render(pct + 2, true);
+    else if (k === "Home") render(0);
+    else if (k === "End") render(100);
+    else if (k === "Enter" || k === " ") render(50);
+    else return;
+    e.preventDefault();
+  });
 
   render(50);
 })();
