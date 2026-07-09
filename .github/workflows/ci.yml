@@ -55,16 +55,18 @@ jobs:
         run: chmod +x build.sh bin/mdview test/smoke.sh test/web-smoke.sh
 
       # Capture each suite's OWN reporter output separately. CI's gate prints only
-      # web-smoke's 33 ok-lines (smoke.sh + frontmatter run as suppressed rollups inside
-      # it); running the three independently exposes the disjoint cascade the contract
-      # counts: web-smoke 33 (e2e) + smoke 13 (integration) + frontmatter 8 (unit) = 54.
+      # web-smoke's ok-lines (smoke.sh + the unit tests run as suppressed rollups inside
+      # it); running each independently exposes the disjoint cascade the contract
+      # counts: web-smoke 33 (e2e) + smoke 17 (integration) + frontmatter 8 (unit)
+      # + url-resolve 15 (unit) = 73.
       # `|| true`: on a red run the reporter is still captured (fewer ok-lines) — the run
       # is flagged red via test_result below and excluded downstream, never counted green.
-      - name: Capture reporter output (three disjoint suites)
+      - name: Capture reporter output (four disjoint suites)
         run: |
-          node test/frontmatter.test.mjs   > /tmp/frontmatter.out 2>&1 || true
-          ./test/smoke.sh                   > /tmp/smoke.out       2>&1 || true
-          ./test/web-smoke.sh               > /tmp/web-smoke.out   2>&1 || true
+          node test/frontmatter.test.mjs   > /tmp/frontmatter.out  2>&1 || true
+          node test/url-resolve.test.mjs   > /tmp/url-resolve.out   2>&1 || true
+          ./test/smoke.sh                   > /tmp/smoke.out        2>&1 || true
+          ./test/web-smoke.sh               > /tmp/web-smoke.out    2>&1 || true
 
       # Pinned to the full commit SHA of test-stats-action. Third-party actions are
       # SHA-pinned, never tag-floated. This bumps off 7a53ad0d, whose action.yml embedded a

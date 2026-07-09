@@ -5,6 +5,21 @@ All notable changes to **md-viewer**. Format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0 (`0.x`)
 means the shape can still move. Each release links the pull requests it contains.
 
+## v0.4.0 — 2026-07-09
+
+**Relative images & links resolve in the Finder tool** · `3d1ab67`
+
+- A `.md` opened via the Finder tool (`mdview`) renders in a temp dir, so a
+  relative `![](./img.png)` or `[link](./other.md)` used to 404. `mdview` now
+  passes the source file's directory into the viewer, and relative `<img>`/`<a>`
+  URLs are rewritten to `file://` absolute against it after DOMPurify runs.
+- Scheme URIs (`http(s):`, `data:`, `mailto:`, …), protocol-relative `//…` and
+  in-page `#anchors` are left untouched; `?query`/`#fragment` are preserved.
+- The rewrite happens **after** sanitisation and only sets `src`/`href` via
+  `setAttribute`, so it adds no script-execution surface. ([#17](https://github.com/neckarshore-mmps/md-viewer/pull/17))
+- The web app (drag/drop/paste) is unchanged — it has no source directory to
+  resolve against.
+
 ## v0.3.1 — 2026-07-06
 
 **Footer legibility + privacy claim** · `5411938`

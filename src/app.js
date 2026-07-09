@@ -3,6 +3,7 @@
 (function () {
   var MD_B64 = "__MD_BASE64__";
   var NAME_B64 = "__MD_FILENAME_B64__";
+  var BASEDIR_B64 = "__MD_BASEDIR_B64__";
 
   function b64ToUtf8(b64) {
     var bin = atob(b64);
@@ -13,6 +14,7 @@
 
   var md = b64ToUtf8(MD_B64);
   var name = b64ToUtf8(NAME_B64);
+  var baseDir = b64ToUtf8(BASEDIR_B64);
 
   document.title = name;
   document.getElementById("filename").textContent = name;
@@ -29,6 +31,11 @@
     var html = marked.parse(fm.body);
     if (window.DOMPurify) html = DOMPurify.sanitize(html);
     rendered.innerHTML = html;
+    // Rewrite relative image/link URLs AFTER sanitize: the file lives in a temp
+    // dir, so relative refs must point back at the source dir. Done post-DOMPurify
+    // because DOMPurify strips file:// URIs; here we set them via setAttribute on
+    // an already-sanitized tree (a file:// image src cannot execute script).
+    rewriteRelativeUrls(rendered, baseDir);
   } else {
     rendered.textContent = fm.body;
   }
@@ -67,6 +74,55 @@
     dragging = false;
     document.body.style.cursor = "";
   });
+
+  // ─── Relative URL rewriting (Finder tool only — needs a source dir) ────────
+  // Walk the rendered tree and repoint relative <img src> / <a href> at the
+  // real source directory so images and local links resolve instead of 404ing
+  // against the temp dir the viewer HTML lives in.
+  function rewriteRelativeUrls(container, dir) {
+    if (!dir) return;
+    var imgs = container.querySelectorAll("img[src]");
+    for (var i = 0; i < imgs.length; i++) {
+      imgs[i].setAttribute("src", resolveRelativeUrl(imgs[i].getAttribute("src"), dir));
+    }
+    var links = container.querySelectorAll("a[href]");
+    for (var j = 0; j < links.length; j++) {
+      links[j].setAttribute("href", resolveRelativeUrl(links[j].getAttribute("href"), dir));
+    }
+  }
+  // Pure resolver (mirrored in test/url-resolve.test.mjs — keep in sync).
+  // Leaves in-page anchors (#…), scheme URIs (http:, https:, data:, mailto:,
+  // file:, …) and protocol-relative (//…) URLs untouched; turns everything else
+  // into a file:// absolute URL resolved against baseDir.
+  function resolveRelativeUrl(url, baseDir) {
+    if (!url) return url;
+    var u = url;
+    if (u.charAt(0) === "#") return url;
+    if (/^[a-zA-Z][a-zA-Z0-9+.\-]*:/.test(u)) return url;
+    if (u.slice(0, 2) === "//") return url;
+    // Peel off ?query / #fragment; resolve only the path, then re-append.
+    var suffix = "";
+    var h = u.indexOf("#");
+    if (h !== -1) { suffix = u.slice(h) + suffix; u = u.slice(0, h); }
+    var q = u.indexOf("?");
+    if (q !== -1) { suffix = u.slice(q) + suffix; u = u.slice(0, q); }
+    if (!u) return url; // was a pure ?query/#fragment — leave it alone
+    var raw = u;
+    try { raw = decodeURI(u); } catch (e) { raw = u; } // idempotent re-encode below
+    var path = raw.charAt(0) === "/" ? raw : baseDir + "/" + raw;
+    return "file://" + encodeURI(normalizePath(path)) + suffix;
+  }
+  // Collapse "." and ".." segments of an absolute POSIX path.
+  function normalizePath(p) {
+    var parts = p.split("/"), out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var seg = parts[i];
+      if (seg === "" || seg === ".") continue;
+      if (seg === "..") { out.pop(); continue; }
+      out.push(seg);
+    }
+    return "/" + out.join("/");
+  }
 
   // ─── YAML frontmatter (shared with web-app.js — keep in sync) ──────────────
   function stripQuotes(s) {

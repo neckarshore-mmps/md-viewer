@@ -19,6 +19,8 @@ echo "==> md-viewer smoke test"
 [ -f "$ROOT/viewer.html" ] && pass "build produced viewer.html" || die "viewer.html missing"
 grep -q "__MD_BASE64__" "$ROOT/viewer.html" && pass "template has MD placeholder" || die "MD placeholder missing"
 grep -q "__MD_FILENAME_B64__" "$ROOT/viewer.html" && pass "template has filename placeholder" || die "filename placeholder missing"
+grep -q "__MD_BASEDIR_B64__" "$ROOT/viewer.html" && pass "template has base-dir placeholder" || die "base-dir placeholder missing"
+grep -q "resolveRelativeUrl" "$ROOT/viewer.html" && pass "relative-URL resolver inlined" || die "relative-URL resolver not inlined"
 
 # 2. Vendored libs must be inlined (offline / self-contained).
 grep -q "marked" "$ROOT/viewer.html" && pass "marked inlined" || die "marked not inlined"
@@ -29,7 +31,7 @@ grep -q "markdown-body" "$ROOT/viewer.html" && pass "github-markdown css inlined
 # 3. mdview must generate output with placeholders resolved.
 out="$(MDVIEW_NO_OPEN=1 "$ROOT/bin/mdview" "$FIXTURE")"
 [ -f "$out" ] && pass "mdview generated $out" || die "mdview produced no output"
-if grep -q "__MD_BASE64__\|__MD_FILENAME_B64__" "$out"; then
+if grep -q "__MD_BASE64__\|__MD_FILENAME_B64__\|__MD_BASEDIR_B64__" "$out"; then
   die "unresolved placeholders remain in output"
 else
   pass "all placeholders resolved"
@@ -38,6 +40,11 @@ fi
 # 4. Payload round-trips: the fixture's base64 must appear in the output.
 expected_b64="$(base64 < "$FIXTURE" | tr -d '\n')"
 grep -qF "$expected_b64" "$out" && pass "MD payload embedded" || die "MD payload not embedded"
+
+# 4b. Source dir round-trips: the fixture's absolute dir (base64) must be embedded
+# so app.js can resolve relative image/link URLs against it at render time.
+dir_b64="$(printf '%s' "$(cd "$(dirname "$FIXTURE")" && pwd)" | base64 | tr -d '\n')"
+grep -qF "$dir_b64" "$out" && pass "source dir embedded" || die "source dir not embedded"
 
 # 5. mdview must reject a missing file.
 if MDVIEW_NO_OPEN=1 "$ROOT/bin/mdview" "$ROOT/test/does-not-exist.md" >/dev/null 2>&1; then
@@ -55,6 +62,13 @@ else
   die "frontmatter parser unit test failed"
 fi
 grep -q "splitFrontmatter" "$ROOT/viewer.html" && pass "frontmatter splitter inlined" || die "frontmatter splitter not inlined"
+
+# 7. Relative-URL resolver: unit test passes.
+if node "$ROOT/test/url-resolve.test.mjs" >/dev/null 2>&1; then
+  pass "relative-URL resolver unit test"
+else
+  die "relative-URL resolver unit test failed"
+fi
 
 if [ "$fail" -ne 0 ]; then
   echo "==> SMOKE TEST FAILED"
