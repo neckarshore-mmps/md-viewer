@@ -204,6 +204,16 @@ body {
   box-shadow: 0 0 0 1px var(--accent), 0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
+/* View tabs — desktop hidden, shown only on narrow viewports (see @media below). */
+.viewtabs { display: none; }
+.viewtab {
+  flex: 1; font: inherit; font-family: var(--font-mono); font-size: 12px;
+  letter-spacing: 0.03em; padding: 10px 0; background: transparent; color: var(--sfg);
+  border: var(--bw) solid var(--line); border-right: none; cursor: pointer;
+}
+.viewtab:last-child { border-right: var(--bw) solid var(--line); }
+.viewtab[aria-selected="true"] { background: var(--fg); color: var(--bg); }
+
 /* ─── Footer (pinned to viewport bottom via flex column) ─────── */
 .foot {
   flex: 0 0 auto;
@@ -301,15 +311,12 @@ body {
   }
   .bar #filename { max-width: 100%; }
   .nav-right { margin-left: 0; }
+  .viewtabs { display: flex; }
+  .divider { display: none; }
   .split { flex-direction: column; }
-  .pane.left { flex: 0 0 50%; }
-  .pane.right { flex: 1 1 auto; }
-  .divider {
-    flex: 0 0 var(--divider-w);
-    width: 100%;
-    height: var(--divider-w);
-    cursor: row-resize;
-  }
+  .split .pane { display: none; }
+  .split.show-rendered .pane.left { display: block; flex: 1 1 auto !important; }
+  .split.show-raw .pane.right { display: block; flex: 1 1 auto !important; }
   .foot { font-size: 11px; letter-spacing: 0.02em; }
   .foot .sep { margin: 0 5px; }
   .grid-rail { display: none !important; }
@@ -545,6 +552,10 @@ body {
     <span class="rail-num">03</span>
     <span class="rail-num">04</span>
   </aside>
+  <div class="viewtabs" role="tablist" aria-label="View">
+    <button class="viewtab" role="tab" data-view="rendered" aria-selected="true" tabindex="0" type="button">Rendered</button>
+    <button class="viewtab" role="tab" data-view="raw" aria-selected="false" tabindex="-1" type="button">Raw</button>
+  </div>
   <div class="split" id="split">
     <section class="pane left"><article id="rendered" class="rendered"></article></section>
     <div class="divider" id="divider" role="separator" aria-orientation="vertical"
@@ -2129,6 +2140,23 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
     else return;
     e.preventDefault();
   });
+
+  // Mobile tabs — toggle which pane shows below the breakpoint. On desktop the
+  // .viewtabs element is display:none, so these handlers simply never fire.
+  var tabs = document.querySelectorAll(".viewtab");
+  function showView(view) {
+    split.classList.toggle("show-rendered", view === "rendered");
+    split.classList.toggle("show-raw", view === "raw");
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute("data-view") === view;
+      tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+      tabs[i].setAttribute("tabindex", on ? "0" : "-1");
+    }
+  }
+  for (var t = 0; t < tabs.length; t++) {
+    tabs[t].addEventListener("click", function () { showView(this.getAttribute("data-view")); });
+  }
+  showView("rendered");   // default
 
   render(50);
 })();

@@ -53,3 +53,19 @@ test("keyboard: End collapses, arrow restores, Enter resets", async ({ page }) =
   await page.keyboard.press("Enter");            // reset to 50
   expect(await divider.getAttribute("aria-valuenow")).toBe("50");
 });
+
+test("mobile: divider hidden, tabs switch panes", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 700 });
+  await expect(page.locator("#divider")).toBeHidden();
+  const tabs = page.locator(".viewtabs");
+  await expect(tabs).toBeVisible();
+
+  // default = rendered visible, raw hidden
+  await expect(page.locator(".pane.left")).toBeVisible();
+  await expect(page.locator(".pane.right")).toBeHidden();
+
+  await page.click('.viewtab[data-view="raw"]');
+  await expect(page.locator(".pane.right")).toBeVisible();
+  await expect(page.locator(".pane.left")).toBeHidden();
+  expect(await page.getAttribute('.viewtab[data-view="raw"]', "aria-selected")).toBe("true");
+});

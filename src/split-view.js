@@ -50,5 +50,22 @@
     e.preventDefault();
   });
 
+  // Mobile tabs — toggle which pane shows below the breakpoint. On desktop the
+  // .viewtabs element is display:none, so these handlers simply never fire.
+  var tabs = document.querySelectorAll(".viewtab");
+  function showView(view) {
+    split.classList.toggle("show-rendered", view === "rendered");
+    split.classList.toggle("show-raw", view === "raw");
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute("data-view") === view;
+      tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+      tabs[i].setAttribute("tabindex", on ? "0" : "-1");
+    }
+  }
+  for (var t = 0; t < tabs.length; t++) {
+    tabs[t].addEventListener("click", function () { showView(this.getAttribute("data-view")); });
+  }
+  showView("rendered");   // default
+
   render(50);
 })();

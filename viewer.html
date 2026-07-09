@@ -1273,6 +1273,25 @@ body { display: flex; flex-direction: column; background: var(--bg); }
 
 .split { flex: 1 1 auto; display: flex; min-height: 0; }
 .pane { overflow: auto; min-width: 0; height: 100%; }
+
+/* View tabs — desktop hidden, shown only on narrow viewports (see @media below). */
+.viewtabs { display: none; }
+.viewtab {
+  flex: 1; font: inherit; font-size: 13px; font-weight: 600; padding: 10px 0;
+  background: transparent; color: var(--bar-fg);
+  border: 1px solid var(--border); border-right: none; cursor: pointer;
+}
+.viewtab:last-child { border-right: 1px solid var(--border); }
+.viewtab[aria-selected="true"] { background: var(--bar-fg); color: var(--bg); }
+
+@media (max-width: 640px) {
+  .viewtabs { display: flex; }
+  .divider { display: none; }
+  .split { flex-direction: column; }
+  .split .pane { display: none; }
+  .split.show-rendered .pane.left { display: block; flex: 1 1 auto !important; }
+  .split.show-raw .pane.right { display: block; flex: 1 1 auto !important; }
+}
 .pane.left { flex: 0 0 50%; }
 .pane.right { flex: 1 1 auto; background: var(--bg-raw); }
 
@@ -1360,6 +1379,10 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   <span id="filename"></span>
   <span class="hint">✨ Rendered&nbsp;&nbsp;·&nbsp;&nbsp;Raw MD 📝</span>
 </header>
+<div class="viewtabs" role="tablist" aria-label="Ansicht">
+  <button class="viewtab" role="tab" data-view="rendered" aria-selected="true" tabindex="0" type="button">Rendered</button>
+  <button class="viewtab" role="tab" data-view="raw" aria-selected="false" tabindex="-1" type="button">Raw</button>
+</div>
 <div class="split">
   <section class="pane left"><article id="rendered" class="markdown-body"></article></section>
   <div class="divider" id="divider" role="separator" aria-orientation="vertical"
@@ -2858,6 +2881,23 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
     else return;
     e.preventDefault();
   });
+
+  // Mobile tabs — toggle which pane shows below the breakpoint. On desktop the
+  // .viewtabs element is display:none, so these handlers simply never fire.
+  var tabs = document.querySelectorAll(".viewtab");
+  function showView(view) {
+    split.classList.toggle("show-rendered", view === "rendered");
+    split.classList.toggle("show-raw", view === "raw");
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute("data-view") === view;
+      tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+      tabs[i].setAttribute("tabindex", on ? "0" : "-1");
+    }
+  }
+  for (var t = 0; t < tabs.length; t++) {
+    tabs[t].addEventListener("click", function () { showView(this.getAttribute("data-view")); });
+  }
+  showView("rendered");   // default
 
   render(50);
 })();
