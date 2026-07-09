@@ -7,18 +7,18 @@ means the shape can still move. Each release links the pull requests it contains
 
 ## v0.4.0 — 2026-07-09
 
-**Relative images & links resolve in the Finder tool** · `3d1ab67`
+**Images and local links now show up in the Finder tool** · `3d1ab67`
 
-- A `.md` opened via the Finder tool (`mdview`) renders in a temp dir, so a
-  relative `![](./img.png)` or `[link](./other.md)` used to 404. `mdview` now
-  passes the source file's directory into the viewer, and relative `<img>`/`<a>`
-  URLs are rewritten to `file://` absolute against it after DOMPurify runs.
-- Scheme URIs (`http(s):`, `data:`, `mailto:`, …), protocol-relative `//…` and
-  in-page `#anchors` are left untouched; `?query`/`#fragment` are preserved.
-- The rewrite happens **after** sanitisation and only sets `src`/`href` via
-  `setAttribute`, so it adds no script-execution surface. ([#17](https://github.com/neckarshore-mmps/md-viewer/pull/17))
-- The web app (drag/drop/paste) is unchanged — it has no source directory to
-  resolve against.
+- Open a Markdown file from Finder and the images it references now appear —
+  pictures stored next to the file (or in a subfolder) used to stay broken.
+  Links to other files in the same place work too. ([#17](https://github.com/neckarshore-mmps/md-viewer/pull/17))
+- Web addresses, embedded images, email links and in-page "jump to" links keep
+  working exactly as before.
+- Safety built in: a Markdown file from someone else can't use a sneaky path to
+  reach files outside your own folders (like system files) — those references
+  are simply ignored. Obsidian's shared-attachments folders still work fine.
+- The web app (drag / drop / paste in the browser) is unchanged — it has no
+  folder on your disk to look in, so this applies to the Finder tool only.
 
 ## v0.3.1 — 2026-07-06
 

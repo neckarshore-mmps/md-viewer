@@ -9,6 +9,7 @@ Prioritised list of what's deferred. Treat as the single source of truth for
 | # | Item | Why | Notes |
 |---|------|-----|-------|
 | 1 | **Obsidian / GFM feature coverage** | The owner's real files (Obsidian vault, planning docs) use these; the viewer is half-blind to them today | YAML frontmatter (render as a clean table, not raw), Mermaid diagrams, task lists `- [ ]`, callouts `> [!note]`, `[[wikilinks]]`, footnotes, math. Web app + Finder tool. |
+| 2 | **Mobile / collapsible split layout** *(requirement — needs mockup + discussion)* | On a phone the rendered + raw panes share the screen 50/50 → both far too small to read. Owner feedback (2026-07-09). | Proposal: on mobile viewport, give the **rendered** pane full width and stack the raw/source pane below (scroll down to reach it), ideally **collapsed** by default. Add a **collapse-the-source-pane** control on **desktop too**. Not yet designed — build only after a mockup is agreed. Affects both Finder tool and web app (shared split logic). |
 
 ## Nice-to-have
 

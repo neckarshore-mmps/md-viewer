@@ -34,6 +34,17 @@ name_b64="$(printf '%s' "$(basename "$file")" | base64 | tr -d '\n')"
 srcdir="$(cd "$(dirname "$file")" && pwd)"
 dir_b64="$(printf '%s' "$srcdir" | base64 | tr -d '\n')"
 
+# Containment root: the home dir when the file lives under it (so an Obsidian
+# vault's ../attachments still resolves across subfolders), else the file's own
+# dir. app.js drops any relative/absolute ref that escapes this root, so an
+# untrusted .md cannot turn `../../../etc/hosts` into a live file:// URL.
+home="${HOME:-}"
+root="$srcdir"
+if [ -n "$home" ]; then
+  case "$srcdir/" in "$home"/*) root="$home" ;; esac
+fi
+root_b64="$(printf '%s' "$root" | base64 | tr -d '\n')"
+
 # Output into a temp dir, filename-based so the browser tab reads nicely.
 # Explicit XXXXXX template so it works on both BSD (macOS) and GNU (Linux CI) mktemp.
 tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/mdview.XXXXXX")"
@@ -41,8 +52,8 @@ out="$tmpdir/$(basename "$file").html"
 
 # Replace all three placeholders. base64 output never contains '&' or '\', so
 # awk's gsub replacement string is safe from special-character interpretation.
-awk -v md="$md_b64" -v nm="$name_b64" -v dir="$dir_b64" '
-  { gsub(/__MD_BASE64__/, md); gsub(/__MD_FILENAME_B64__/, nm); gsub(/__MD_BASEDIR_B64__/, dir); print }
+awk -v md="$md_b64" -v nm="$name_b64" -v dir="$dir_b64" -v root="$root_b64" '
+  { gsub(/__MD_BASE64__/, md); gsub(/__MD_FILENAME_B64__/, nm); gsub(/__MD_BASEDIR_B64__/, dir); gsub(/__MD_ROOT_B64__/, root); print }
 ' "$TEMPLATE" > "$out"
 
 # MDVIEW_NO_OPEN=1 skips launching the browser (used by tests / scripting) and

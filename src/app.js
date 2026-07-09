@@ -4,6 +4,7 @@
   var MD_B64 = "__MD_BASE64__";
   var NAME_B64 = "__MD_FILENAME_B64__";
   var BASEDIR_B64 = "__MD_BASEDIR_B64__";
+  var ROOT_B64 = "__MD_ROOT_B64__";
 
   function b64ToUtf8(b64) {
     var bin = atob(b64);
@@ -15,6 +16,7 @@
   var md = b64ToUtf8(MD_B64);
   var name = b64ToUtf8(NAME_B64);
   var baseDir = b64ToUtf8(BASEDIR_B64);
+  var containRoot = b64ToUtf8(ROOT_B64);
 
   document.title = name;
   document.getElementById("filename").textContent = name;
@@ -35,7 +37,7 @@
     // dir, so relative refs must point back at the source dir. Done post-DOMPurify
     // because DOMPurify strips file:// URIs; here we set them via setAttribute on
     // an already-sanitized tree (a file:// image src cannot execute script).
-    rewriteRelativeUrls(rendered, baseDir);
+    rewriteRelativeUrls(rendered, baseDir, containRoot);
   } else {
     rendered.textContent = fm.body;
   }
@@ -79,22 +81,24 @@
   // Walk the rendered tree and repoint relative <img src> / <a href> at the
   // real source directory so images and local links resolve instead of 404ing
   // against the temp dir the viewer HTML lives in.
-  function rewriteRelativeUrls(container, dir) {
+  function rewriteRelativeUrls(container, dir, root) {
     if (!dir) return;
     var imgs = container.querySelectorAll("img[src]");
     for (var i = 0; i < imgs.length; i++) {
-      imgs[i].setAttribute("src", resolveRelativeUrl(imgs[i].getAttribute("src"), dir));
+      imgs[i].setAttribute("src", resolveRelativeUrl(imgs[i].getAttribute("src"), dir, root));
     }
     var links = container.querySelectorAll("a[href]");
     for (var j = 0; j < links.length; j++) {
-      links[j].setAttribute("href", resolveRelativeUrl(links[j].getAttribute("href"), dir));
+      links[j].setAttribute("href", resolveRelativeUrl(links[j].getAttribute("href"), dir, root));
     }
   }
   // Pure resolver (mirrored in test/url-resolve.test.mjs — keep in sync).
   // Leaves in-page anchors (#…), scheme URIs (http:, https:, data:, mailto:,
   // file:, …) and protocol-relative (//…) URLs untouched; turns everything else
-  // into a file:// absolute URL resolved against baseDir.
-  function resolveRelativeUrl(url, baseDir) {
+  // into a file:// absolute URL resolved against baseDir. Any path that escapes
+  // `root` (home dir / file dir) is left UNRESOLVED — an untrusted .md must not
+  // turn `../../../etc/hosts` into a live file:// URL to an arbitrary local file.
+  function resolveRelativeUrl(url, baseDir, root) {
     if (!url) return url;
     var u = url;
     if (u.charAt(0) === "#") return url;
@@ -109,8 +113,14 @@
     if (!u) return url; // was a pure ?query/#fragment — leave it alone
     var raw = u;
     try { raw = decodeURI(u); } catch (e) { raw = u; } // idempotent re-encode below
-    var path = raw.charAt(0) === "/" ? raw : baseDir + "/" + raw;
-    return "file://" + encodeURI(normalizePath(path)) + suffix;
+    var path = normalizePath(raw.charAt(0) === "/" ? raw : baseDir + "/" + raw);
+    if (root && !isUnder(path, root)) return url; // escaped containment → leave as-is
+    return "file://" + encodeURI(path) + suffix;
+  }
+  // True when `path` is `root` itself or a descendant of it.
+  function isUnder(path, root) {
+    var r = root.replace(/\/+$/, "");
+    return path === r || path.indexOf(r + "/") === 0;
   }
   // Collapse "." and ".." segments of an absolute POSIX path.
   function normalizePath(p) {
