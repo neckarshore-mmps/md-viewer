@@ -25,3 +25,17 @@ test("drag back inward leaves the edge state", async ({ page }) => {
   await dragDividerToX(page, mid);
   await expect(page.locator("#divider")).not.toHaveClass(/edge/);
 });
+
+test("double-click resets to ~50/50 and clears the edge", async ({ page }) => {
+  await dragDividerToX(page, 0);
+  await expect(page.locator("#divider")).toHaveClass(/edge/);
+  await page.locator("#divider").dblclick();
+  await expect(page.locator("#divider")).not.toHaveClass(/edge/);
+  const ratio = await page.evaluate(() => {
+    const split = document.querySelector(".split")!.getBoundingClientRect().width;
+    const left = document.querySelector(".pane.left")!.getBoundingClientRect().width;
+    return left / split;
+  });
+  expect(ratio).toBeGreaterThan(0.45);
+  expect(ratio).toBeLessThan(0.55);
+});

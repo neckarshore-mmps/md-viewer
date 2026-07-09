@@ -36,5 +36,7 @@
     try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
   });
 
+  divider.addEventListener("dblclick", function () { render(50); });
+
   render(50);
 })();
