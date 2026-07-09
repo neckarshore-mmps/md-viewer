@@ -62,6 +62,13 @@ done
 grep -q "mdv-split-view" "$OUT" && pass "split-view inlined (web)" || die "split-view.js not inlined in web/index.html"
 grep -q "mdv-split-view" "$ROOT/viewer.html" && pass "split-view inlined (finder)" || die "split-view.js not inlined in viewer.html"
 
+# Split-layout structure: mobile tabs + divider a11y in both targets; Readme relabel.
+grep -q 'class="viewtabs"' "$ROOT/viewer.html" && pass "viewtabs present (finder)" || die "viewtabs missing in viewer.html"
+grep -q 'class="viewtabs"' "$OUT" && pass "viewtabs present (web)" || die "viewtabs missing in web/index.html"
+grep -q 'role="separator"' "$ROOT/viewer.html" && pass "divider a11y (finder)" || die "divider a11y missing in viewer.html"
+grep -q 'role="separator"' "$OUT" && pass "divider a11y (web)" || die "divider a11y missing in web/index.html"
+grep -q '>Readme' "$OUT" && pass "Readme label present" || die "Readme label missing in web/index.html"
+
 # Finder tool untouched + still green.
 grep -q "splitFrontmatter" "$OUT" && pass "frontmatter splitter inlined" || die "frontmatter splitter not inlined"
 
