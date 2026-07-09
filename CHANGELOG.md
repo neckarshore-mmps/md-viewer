@@ -17,6 +17,10 @@ means the shape can still move. Each release links the pull requests it contains
 - Safety built in: a Markdown file from someone else can't use a sneaky path to
   reach files outside your own folders (like system files) — those references
   are simply ignored. Obsidian's shared-attachments folders still work fine.
+- That safety is now checked automatically: before every release, a test opens a
+  deliberately hostile Markdown file in a real browser and confirms it cannot run
+  code, open windows, or reach files on your computer. If a future change ever
+  weakened this, the release is blocked. ([#19](https://github.com/neckarshore-mmps/md-viewer/pull/19))
 - The web app (drag / drop / paste in the browser) is unchanged — it has no
   folder on your disk to look in, so this applies to the Finder tool only.
 
