@@ -54,10 +54,16 @@ body {
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
 
+/* Toolbar icons — flat Material inline-SVG, one size scale, colour via currentColor. */
+.btn svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+.btn .mode-icon { display: inline-flex; }
+.btn .mode-icon svg { width: 14px; height: 14px; }
+.btn svg.caret { width: 20px; height: 20px; opacity: 0.75; margin-left: -2px; }
+
 /* Theme dropdown (combobox with typeahead) */
 .theme-menu { position: relative; display: inline-flex; }
 .theme-menu-btn { display: inline-flex; align-items: center; gap: 8px; min-width: 108px; justify-content: space-between; }
-.theme-menu-btn .caret { font-size: 10px; opacity: 0.7; }
+.theme-menu-btn .caret { fill: currentColor; }
 .theme-menu-list {
   position: absolute; top: calc(100% + 4px); right: 0; z-index: 60;
   margin: 0; padding: 4px; list-style: none; min-width: 100%;
@@ -94,6 +100,22 @@ body {
   cursor: col-resize;
 }
 .divider:hover { background: var(--accent); }
+/* Collapsed to an extreme: pinned red bar, widened hit area, subtle glow. */
+.divider.edge {
+  background: var(--accent);
+  flex-basis: 8px;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* View tabs — desktop hidden, shown only on narrow viewports (see @media below). */
+.viewtabs { display: none; }
+.viewtab {
+  flex: 1; font: inherit; font-family: var(--font-mono); font-size: 12px;
+  letter-spacing: 0.03em; padding: 10px 0; background: transparent; color: var(--sfg);
+  border: var(--bw) solid var(--line); border-right: none; cursor: pointer;
+}
+.viewtab:last-child { border-right: var(--bw) solid var(--line); }
+.viewtab[aria-selected="true"] { background: var(--fg); color: var(--bg); }
 
 /* ─── Footer (pinned to viewport bottom via flex column) ─────── */
 .foot {
@@ -192,15 +214,13 @@ body {
   }
   .bar #filename { max-width: 100%; }
   .nav-right { margin-left: 0; }
+  .stage { flex-direction: column; }
+  .viewtabs { display: flex; flex: 0 0 auto; }
+  .divider { display: none; }
   .split { flex-direction: column; }
-  .pane.left { flex: 0 0 50%; }
-  .pane.right { flex: 1 1 auto; }
-  .divider {
-    flex: 0 0 var(--divider-w);
-    width: 100%;
-    height: var(--divider-w);
-    cursor: row-resize;
-  }
+  .split .pane { display: none; }
+  .split.show-rendered .pane.left { display: block; flex: 1 1 auto !important; }
+  .split.show-raw .pane.right { display: block; flex: 1 1 auto !important; }
   .foot { font-size: 11px; letter-spacing: 0.02em; }
   .foot .sep { margin: 0 5px; }
   .grid-rail { display: none !important; }

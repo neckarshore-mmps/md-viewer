@@ -46,6 +46,25 @@ body { display: flex; flex-direction: column; background: var(--bg); }
 
 .split { flex: 1 1 auto; display: flex; min-height: 0; }
 .pane { overflow: auto; min-width: 0; height: 100%; }
+
+/* View tabs — desktop hidden, shown only on narrow viewports (see @media below). */
+.viewtabs { display: none; }
+.viewtab {
+  flex: 1; font: inherit; font-size: 13px; font-weight: 600; padding: 10px 0;
+  background: transparent; color: var(--bar-fg);
+  border: 1px solid var(--border); border-right: none; cursor: pointer;
+}
+.viewtab:last-child { border-right: 1px solid var(--border); }
+.viewtab[aria-selected="true"] { background: var(--bar-fg); color: var(--bg); }
+
+@media (max-width: 640px) {
+  .viewtabs { display: flex; }
+  .divider { display: none; }
+  .split { flex-direction: column; }
+  .split .pane { display: none; }
+  .split.show-rendered .pane.left { display: block; flex: 1 1 auto !important; }
+  .split.show-raw .pane.right { display: block; flex: 1 1 auto !important; }
+}
 .pane.left { flex: 0 0 50%; }
 .pane.right { flex: 1 1 auto; background: var(--bg-raw); }
 
@@ -55,6 +74,12 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   cursor: col-resize;
 }
 .divider:hover { background: #3b82f6; }
+/* Collapsed to an extreme: pinned red bar, widened hit area, subtle glow. */
+.divider.edge {
+  background: var(--mdv-red);
+  flex-basis: 8px;
+  box-shadow: 0 0 0 1px var(--mdv-red), 0 0 14px rgba(204, 0, 0, 0.5);
+}
 
 /* Rendered pane */
 .markdown-body {

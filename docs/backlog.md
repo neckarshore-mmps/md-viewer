@@ -16,7 +16,7 @@ Prioritised list of what's deferred. Treat as the single source of truth for
 | # | Item | Notes |
 |---|------|-------|
 | 3 | Copy button on code blocks | Small JS + button per `<pre>` |
-| 4 | Remember divider position + last file | localStorage; last file only feasible on web via File System Access handle |
+| 4 | ~~Remember divider position~~ + last file | **Divider-position persistence: Won't-do** (owner, 2026-07-10 — struck during the split-layout #2 design). Remaining: remember last file — localStorage; only feasible on web via File System Access handle |
 | 5 | Print / PDF export | `@media print` stylesheet + a print button |
 | 6 | Real line-number gutter in the source pane | We shipped the decorative Swiss rail instead; a true per-line gutter is a separate feature |
 | 7 | `og:image` for shared-link preview | Needs a generated preview image; otherwise the social card has no image |

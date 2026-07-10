@@ -14,6 +14,7 @@ VENDOR="vendor"
 
 # Verify inputs exist
 for f in "$SRC/head.html" "$SRC/body.html" "$SRC/layout.css" "$SRC/app.js" \
+         "$SRC/split-view.js" \
          "$SRC/web-head.html" "$SRC/web-body.html" "$SRC/web-app.js" \
          "$SRC/web-fonts.css" "$SRC/web-themes.css" "$SRC/web-chrome.css" \
          "$SRC/web-chrome-themes.css" "$SRC/web-md.css" \
@@ -56,6 +57,7 @@ emit_finder() {
     cat "$SRC/body.html"
     emit_libs
     echo '<script>'; cat "$SRC/app.js"; echo '</script>'
+    echo '<script>'; cat "$SRC/split-view.js"; echo '</script>'
     echo '</body>'; echo '</html>'
   } > "$out"
   echo "build.sh: wrote $out ($(wc -c < "$out" | tr -d ' ') bytes)"
@@ -80,6 +82,7 @@ emit_web() {
     cat "$SRC/web-body.html"
     emit_libs
     echo '<script>'; cat "$SRC/web-app.js"; echo '</script>'
+    echo '<script>'; cat "$SRC/split-view.js"; echo '</script>'
     echo '</body>'; echo '</html>'
   } > "$out"
 

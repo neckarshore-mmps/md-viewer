@@ -1273,6 +1273,25 @@ body { display: flex; flex-direction: column; background: var(--bg); }
 
 .split { flex: 1 1 auto; display: flex; min-height: 0; }
 .pane { overflow: auto; min-width: 0; height: 100%; }
+
+/* View tabs — desktop hidden, shown only on narrow viewports (see @media below). */
+.viewtabs { display: none; }
+.viewtab {
+  flex: 1; font: inherit; font-size: 13px; font-weight: 600; padding: 10px 0;
+  background: transparent; color: var(--bar-fg);
+  border: 1px solid var(--border); border-right: none; cursor: pointer;
+}
+.viewtab:last-child { border-right: 1px solid var(--border); }
+.viewtab[aria-selected="true"] { background: var(--bar-fg); color: var(--bg); }
+
+@media (max-width: 640px) {
+  .viewtabs { display: flex; }
+  .divider { display: none; }
+  .split { flex-direction: column; }
+  .split .pane { display: none; }
+  .split.show-rendered .pane.left { display: block; flex: 1 1 auto !important; }
+  .split.show-raw .pane.right { display: block; flex: 1 1 auto !important; }
+}
 .pane.left { flex: 0 0 50%; }
 .pane.right { flex: 1 1 auto; background: var(--bg-raw); }
 
@@ -1282,6 +1301,12 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   cursor: col-resize;
 }
 .divider:hover { background: #3b82f6; }
+/* Collapsed to an extreme: pinned red bar, widened hit area, subtle glow. */
+.divider.edge {
+  background: var(--mdv-red);
+  flex-basis: 8px;
+  box-shadow: 0 0 0 1px var(--mdv-red), 0 0 14px rgba(204, 0, 0, 0.5);
+}
 
 /* Rendered pane */
 .markdown-body {
@@ -1354,9 +1379,16 @@ body { display: flex; flex-direction: column; background: var(--bg); }
   <span id="filename"></span>
   <span class="hint">✨ Rendered&nbsp;&nbsp;·&nbsp;&nbsp;Raw MD 📝</span>
 </header>
+<div class="viewtabs" role="tablist" aria-label="Ansicht">
+  <button class="viewtab" role="tab" data-view="rendered" aria-selected="true" tabindex="0" type="button">Rendered</button>
+  <button class="viewtab" role="tab" data-view="raw" aria-selected="false" tabindex="-1" type="button">Raw</button>
+</div>
 <div class="split">
   <section class="pane left"><article id="rendered" class="markdown-body"></article></section>
-  <div class="divider" id="divider" title="Ziehen zum Verschieben"></div>
+  <div class="divider" id="divider" role="separator" aria-orientation="vertical"
+       aria-label="Resize panes" tabindex="0"
+       aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"
+       title="Ziehen · Rand = voll · Doppelklick = 50/50"></div>
   <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
 </div>
 <script>
@@ -2673,28 +2705,7 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
     try { hljs.highlightElement(codeEl); } catch (e) { /* fall back to plain text */ }
   }
 
-  // Draggable divider
-  var divider = document.getElementById("divider");
-  var left = document.querySelector(".pane.left");
-  var split = document.querySelector(".split");
-  var dragging = false;
-
-  divider.addEventListener("mousedown", function (e) {
-    dragging = true;
-    document.body.style.cursor = "col-resize";
-    e.preventDefault();
-  });
-  window.addEventListener("mousemove", function (e) {
-    if (!dragging) return;
-    var rect = split.getBoundingClientRect();
-    var pct = ((e.clientX - rect.left) / rect.width) * 100;
-    pct = Math.max(15, Math.min(85, pct));
-    left.style.flex = "0 0 " + pct + "%";
-  });
-  window.addEventListener("mouseup", function () {
-    dragging = false;
-    document.body.style.cursor = "";
-  });
+  // Divider drag + mobile tabs now live in the shared src/split-view.js module.
 
   // ─── Relative URL rewriting (Finder tool only — needs a source dir) ────────
   // Walk the rendered tree and repoint relative <img src> / <a href> at the
@@ -2816,6 +2827,79 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
     });
     return panel;
   }
+})();
+</script>
+<script>
+/* mdv-split-view — shared divider/tab controller for both build targets.
+   Self-initializes on load by DOM query. Desktop: drag the divider to resize.
+   (Edge-collapse, double-click reset, keyboard a11y and mobile tabs are layered
+   on in later tasks.) ES5-only to match the codebase. */
+(function () {
+  var split = document.querySelector(".split");
+  var divider = document.getElementById("divider");
+  var left = document.querySelector(".pane.left");
+  if (!split || !divider || !left) return;
+
+  var SNAP = 6;
+  var pct = 50;
+  function render(p, noSnap) {
+    p = Math.max(0, Math.min(100, p));
+    if (!noSnap) { if (p < SNAP) p = 0; else if (p > 100 - SNAP) p = 100; }
+    pct = p;
+    left.style.flex = "0 0 " + p + "%";
+    divider.classList.toggle("edge", p === 0 || p === 100);
+    divider.setAttribute("aria-valuenow", String(Math.round(p)));
+  }
+
+  var dragging = false;
+  divider.addEventListener("pointerdown", function (e) {
+    dragging = true;
+    try { divider.setPointerCapture(e.pointerId); } catch (err) {}
+    document.body.style.cursor = "col-resize";
+    e.preventDefault();
+  });
+  divider.addEventListener("pointermove", function (e) {
+    if (!dragging) return;
+    var rect = split.getBoundingClientRect();
+    render(((e.clientX - rect.left) / rect.width) * 100);
+  });
+  divider.addEventListener("pointerup", function (e) {
+    dragging = false;
+    document.body.style.cursor = "";
+    try { divider.releasePointerCapture(e.pointerId); } catch (err) {}
+  });
+
+  divider.addEventListener("dblclick", function () { render(50); });
+
+  divider.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k === "ArrowLeft") render(pct - 2, true);
+    else if (k === "ArrowRight") render(pct + 2, true);
+    else if (k === "Home") render(0);
+    else if (k === "End") render(100);
+    else if (k === "Enter" || k === " ") render(50);
+    else return;
+    e.preventDefault();
+  });
+
+  // Mobile tabs — toggle which pane shows below the breakpoint. On desktop the
+  // .viewtabs element is display:none, so these handlers simply never fire.
+  var tabs = document.querySelectorAll(".viewtab");
+  function showView(view) {
+    split.classList.toggle("show-rendered", view === "rendered");
+    split.classList.toggle("show-raw", view === "raw");
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute("data-view") === view;
+      tabs[i].setAttribute("aria-selected", on ? "true" : "false");
+      tabs[i].setAttribute("tabindex", on ? "0" : "-1");
+    }
+  }
+  for (var t = 0; t < tabs.length; t++) {
+    tabs[t].addEventListener("click", function () { showView(this.getAttribute("data-view")); });
+  }
+  showView("rendered");   // default
+
+  render(50);
 })();
 </script>
 </body>

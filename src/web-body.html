@@ -1,16 +1,22 @@
 <nav class="bar">
   <span id="filename">README.md</span>
   <span class="controls">
-    <button class="btn" id="open" type="button">Open .md</button>
+    <button class="btn" id="open" type="button" title="Open .md">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>Open
+    </button>
     <input type="file" id="file" accept=".md,.markdown,.mdown,.mkd,.mdx,text/markdown" hidden>
-    <button class="btn" id="readme" type="button">readme.md</button>
-    <a class="btn" id="howto" href="/how-it-works">How it works</a>
+    <button class="btn" id="readme" type="button" title="Readme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.4 1 5.5v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 19.9 5.05 19.5 6.5 19.5c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V5.5c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>Readme
+    </button>
+    <a class="btn" id="howto" href="/how-it-works" title="How it works">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92c-.72.73-1.17 1.33-1.17 2.83h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>How it works
+    </a>
   </span>
   <span class="nav-right">
     <span class="theme-menu" id="themeMenu">
       <button class="btn theme-menu-btn" id="themeMenuBtn" type="button"
               aria-haspopup="listbox" aria-expanded="false">
-        <span class="theme-current">Swiss Grid</span><span class="caret">▾</span>
+        <span class="theme-current">Swiss Grid</span><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5l7 8 7-8z"/></svg>
       </button>
       <ul class="theme-menu-list" id="themeMenuList" role="listbox" aria-label="Theme" hidden>
         <li class="theme-opt" role="option" data-theme="minimalist">Minimalist</li>
@@ -30,9 +36,16 @@
     <span class="rail-num">03</span>
     <span class="rail-num">04</span>
   </aside>
+  <div class="viewtabs" role="tablist" aria-label="View">
+    <button class="viewtab" role="tab" data-view="rendered" aria-selected="true" tabindex="0" type="button">Rendered</button>
+    <button class="viewtab" role="tab" data-view="raw" aria-selected="false" tabindex="-1" type="button">Raw</button>
+  </div>
   <div class="split" id="split">
     <section class="pane left"><article id="rendered" class="rendered"></article></section>
-    <div class="divider" id="divider" title="Drag to resize"></div>
+    <div class="divider" id="divider" role="separator" aria-orientation="vertical"
+         aria-label="Resize panes" tabindex="0"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"
+         title="Drag · edge = full · double-click = 50/50"></div>
     <section class="pane right"><pre><code id="rawcode" class="language-markdown"></code></pre></section>
   </div>
 </main>
