@@ -34,7 +34,7 @@ Both entry points feed the exact same in-browser rendering pipeline.
 | **Browser** | Decode base64 → UTF-8 text | Two renderers then run over the same text, in parallel |
 | **Left · Rendered** | `marked` → `DOMPurify` → `innerHTML` | Markdown → HTML, sanitized so a downloaded file's scripts can't run |
 | **Right · Source** | `highlight.js` (markdown grammar) | Raw text stays verbatim, colour-coded so structure is visible in the source too |
-| **Result** | Split view · scroll-synced · resizable | Read the formatted version and the source at once |
+| **Result** | Split view · scroll-synced · resizable & collapsible | Drag the divider to rebalance — or to an edge to collapse a pane; double-click resets to 50/50, keyboard-operable. On a phone, a `[Rendered | Raw]` tab gives each pane the full screen |
 
 ## 3. What makes it hold together
 
@@ -46,6 +46,14 @@ Both entry points feed the exact same in-browser rendering pipeline.
    Swiss Grid, each in light and dark, entirely from CSS custom properties.
 4. **No build chain** — a pure Bash generator (`build.sh`, `bin/mdview`) assembles
    both outputs. Text in, text out — reviewable and diff-able.
+5. **Resize, collapse, or tab** — drag the divider to rebalance the panes, or to an
+   edge to collapse one (it glows red, so you can grab it back); double-click resets
+   to 50/50, and it is fully keyboard-operable. On a phone, a `[Rendered | Raw]` tab
+   gives each pane the whole screen.
+6. **Reads without JavaScript** — the intro is pre-rendered into the page at build
+   time (`jsdom` running the same `marked` + `DOMPurify`), so search engines and AI
+   assistants see the content with scripts off. It renders identically for you, just
+   a touch faster.
 
 ## 4. Fastest access from Finder
 
@@ -64,5 +72,5 @@ fastest first:
 
 ## Built with
 
-`marked` · `DOMPurify` · `highlight.js` · IBM Plex · Bash / Automator · Vercel ·
-File System Access API.
+`marked` · `DOMPurify` · `highlight.js` · `jsdom` · IBM Plex · Bash / Automator ·
+Vercel · File System Access API.
