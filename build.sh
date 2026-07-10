@@ -106,5 +106,22 @@ emit_web() {
   echo "build.sh: wrote $out ($(wc -c < "$out" | tr -d ' ') bytes) — $top_ver $top_sha"
 }
 
+# Bake the rendered README into #rendered of web/index.html so non-JS crawlers /
+# AI fetchers see the intro prose (backlog #9). Uses jsdom + the vendored
+# marked/dompurify — no browser. Fail-open: without node/jsdom the page still
+# renders client-side exactly as before, so a bare checkout keeps building.
+prerender_web() {
+  if command -v node >/dev/null 2>&1 && [ -f node_modules/jsdom/package.json ]; then
+    if node scripts/prerender.mjs web/index.html; then
+      echo "build.sh: pre-rendered #rendered ($(wc -c < web/index.html | tr -d ' ') bytes)"
+    else
+      echo "build.sh: WARNING pre-render skipped (jsdom render failed) — #rendered stays client-rendered" >&2
+    fi
+  else
+    echo "build.sh: WARNING node/jsdom unavailable — pre-render skipped, #rendered stays client-rendered" >&2
+  fi
+}
+
 emit_finder
 emit_web
+prerender_web

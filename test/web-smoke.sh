@@ -41,6 +41,15 @@ grep -q 'href="/how-it-works"' "$OUT" && pass "how-it-works nav link" || die "ho
 grep -qF "$(base64 < "$ROOT/README.md" | tr -d '\n' | cut -c1-40)" "$OUT" && pass "README payload embedded" || die "README not embedded"
 grep -q "__README_B64__" "$OUT" && die "unresolved __README_B64__ placeholder" || pass "README placeholder resolved"
 
+# Backlog #9: the rendered README is baked into #rendered as STATIC HTML so non-JS
+# crawlers / AI fetchers see the intro prose — checked on the raw file, no browser.
+grep -q '<article id="rendered" class="rendered"></article>' "$OUT" \
+  && die "#rendered is empty — pre-render did not run" \
+  || pass "#rendered pre-rendered (not the empty anchor)"
+grep -q '<h1>md-viewer</h1>' "$OUT" \
+  && pass "rendered README H1 present as static HTML" \
+  || die "README H1 not pre-rendered into #rendered"
+
 # Fonts: all 8 woff2 referenced + files present.
 refs=$(grep -o './fonts/[a-z0-9-]*\.woff2' "$OUT" | sort -u | wc -l | tr -d ' ')
 [ "$refs" -eq 5 ] && pass "5 font files referenced" || die "expected 5 font refs, got $refs"
