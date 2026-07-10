@@ -2841,13 +2841,24 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
   if (!split || !divider || !left) return;
 
   var SNAP = 6;
+  // Divider widths — must match --divider-w (6px) and .divider.edge flex-basis
+  // (8px) in both layout.css and web-chrome.css.
+  var DIVIDER_W = 6;
+  var DIVIDER_W_EDGE = 8;
   var pct = 50;
   function render(p, noSnap) {
     p = Math.max(0, Math.min(100, p));
     if (!noSnap) { if (p < SNAP) p = 0; else if (p > 100 - SNAP) p = 100; }
     pct = p;
-    left.style.flex = "0 0 " + p + "%";
-    divider.classList.toggle("edge", p === 0 || p === 100);
+    var edge = p === 0 || p === 100;
+    // Reserve the divider's own width from the left pane so the total never
+    // exceeds 100%. Without this, p=100 sets left to 100% and the divider (its
+    // 8px edge width) overflows off the right edge — invisible + ungrabbable,
+    // so the collapsed pane can't be restored — while p=0 keeps it visible. The
+    // proportional reserve keeps the divider inside the container at BOTH edges.
+    var dw = edge ? DIVIDER_W_EDGE : DIVIDER_W;
+    left.style.flex = "0 0 calc(" + p + "% - " + (p / 100 * dw) + "px)";
+    divider.classList.toggle("edge", edge);
     divider.setAttribute("aria-valuenow", String(Math.round(p)));
   }
 
