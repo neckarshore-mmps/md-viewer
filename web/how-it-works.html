@@ -210,7 +210,7 @@
         </div>
       </div>
       <div class="arrow">↓</div>
-      <div class="node"><div class="k">Result</div><div class="v">Split view · scroll-synced · resizable</div><div class="d">Read the formatted version and the source at once — drag the divider, scroll either side.</div></div>
+      <div class="node"><div class="k">Result</div><div class="v">Split view · scroll-synced · resizable &amp; collapsible</div><div class="d">Read the formatted version and the source at once. Drag the divider to rebalance — or to an edge to collapse a pane; double-click resets to 50/50. On a phone, a <span class="mono">[Rendered&nbsp;|&nbsp;Raw]</span> tab gives each pane the full screen.</div></div>
     </div>
   </section>
 
@@ -221,6 +221,8 @@
       <div class="card"><h4><span class="dot"></span>Safe by construction</h4><p>base64 sidesteps every HTML-escaping bug; <code>DOMPurify</code> strips scripts and event handlers from the rendered side.</p></div>
       <div class="card"><h4><span class="dot"></span>Token-driven themes</h4><p><code>[data-theme]</code> × <code>[data-mode]</code> drive Minimalist and Swiss Grid, each in light and dark — all from CSS custom properties.</p></div>
       <div class="card"><h4><span class="dot"></span>No build chain</h4><p>A pure Bash generator assembles both outputs. The whole thing is text in, text out — reviewable and diff-able.</p></div>
+      <div class="card"><h4><span class="dot"></span>Resize, collapse, or tab</h4><p>Drag the divider to rebalance the panes — or to an edge to collapse one (it glows red, so you can grab it back). Double-click resets to 50/50, and it's fully keyboard-operable. On a phone, a <code>[Rendered | Raw]</code> tab gives each pane the whole screen.</p></div>
+      <div class="card"><h4><span class="dot"></span>Reads without JavaScript</h4><p>The intro is pre-rendered into the page at build time — <code>jsdom</code> running the same <code>marked</code> + <code>DOMPurify</code> — so search engines and AI assistants see the content with scripts off. For you it renders identically, just a touch faster.</p></div>
     </div>
   </section>
 
@@ -253,7 +255,7 @@
     <a class="cta" href="/">Open the viewer →</a>
     <div><span class="foot-note">Built with</span></div>
     <div class="stack">
-      <span>marked</span><span>DOMPurify</span><span>highlight.js</span><span>IBM&nbsp;Plex</span>
+      <span>marked</span><span>DOMPurify</span><span>highlight.js</span><span>jsdom</span><span>IBM&nbsp;Plex</span>
       <span>Bash / Automator</span><span>Vercel</span><span>File&nbsp;System&nbsp;Access&nbsp;API</span>
     </div>
   </footer>
