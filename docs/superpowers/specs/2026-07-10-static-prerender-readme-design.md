@@ -37,10 +37,20 @@ indexed and cited; the raw pane is a duplicate code dump with zero crawler value
 smallest footprint (~+15 KB on a ~240 KB file), no duplication. OG/meta enrichment
 is deliberately excluded — it overlaps the separate `og:image` backlog item.
 
-## Approach (approved): build-time Playwright snapshot
+## Approach (approved): build-time Node + jsdom render
 
-Render the README with the **real client code** and snapshot the result — zero
-logic duplication, guaranteed byte-parity with what users get.
+> **Revised 2026-07-10 (Path 3).** The original approach headless-rendered the built
+> page with Playwright and snapshotted `#rendered`. Grounding against CI revealed that
+> a browser-in-build forces the lightweight `smoke` job (checkout-only) to grow a
+> ~250 MB Chromium install, or the pre-render moves to the fragile Vercel build. Path 3
+> gets the **same parity without a browser**: jsdom gives DOMPurify a DOM in Node, and
+> we run the **exact same vendored `marked.min.js` + `dompurify.min.js`** the browser
+> runs. For the default README (no frontmatter, no hljs in `#rendered`) this is literally
+> `DOMPurify.sanitize(marked.parse(readme))` — no duplication of `splitFrontmatter` /
+> `buildPropsPanel`, and the committed-artifact + freshness model stays intact.
+
+Render the README with the **same vendored libraries** the browser uses, under jsdom —
+no browser anywhere.
 
 ### Data flow
 
@@ -49,59 +59,63 @@ build.sh emits web/index.html  (README as base64, #rendered empty)
         │
         ▼
 node scripts/prerender.mjs web/index.html
-        │  ├─ Playwright loads file://…/web/index.html
-        │  ├─ waits until #rendered is populated (JS ran marked→DOMPurify)
-        │  ├─ reads #rendered.innerHTML
-        │  └─ rewrites <article id="rendered" …></article> to embed that HTML
+        │  ├─ new JSDOM window; window.eval(vendor/marked.min.js + dompurify.min.js)
+        │  ├─ read README.md; marked.setOptions({gfm:true,breaks:false})
+        │  ├─ html = DOMPurify.sanitize(marked.parse(readme))
+        │  └─ rewrite <article id="rendered" …></article> to embed that html
         ▼
 web/index.html  (README markup now static inside #rendered)
 ```
 
 ### Components
 
-1. **`scripts/prerender.mjs`** (new, Node + Playwright, ES modules).
+1. **`scripts/prerender.mjs`** (new, Node + jsdom, ES modules).
    - Input: path to the built `web/index.html`.
-   - Loads it via `file://`, `waitForFunction(() => #rendered.children.length > 0)`
-     with a bounded timeout, reads `#rendered` innerHTML.
+   - Builds a jsdom window and `window.eval`s the **vendored** `marked.min.js` +
+     `dompurify.min.js` (same versions as shipped → parity, no npm-version drift).
+   - Reads `README.md`, applies the same `marked` options as `web-app.js`, renders and
+     sanitises, producing the `#rendered` inner HTML.
    - Replaces the single empty `<article id="rendered" class="rendered"></article>`
-     with `<article id="rendered" class="rendered">…innerHTML…</article>` via an
-     anchored string replace (fails loudly if the anchor is not found exactly once).
+     with `<article id="rendered" class="rendered">…html…</article>` via an anchored
+     string replace (hard-errors if the anchor is not found exactly once).
    - Writes the file back in place.
 
 2. **`build.sh`** — after it emits `web/index.html`, invokes the pre-render step.
-   **Fail-open:** if Node/Playwright/chromium is unavailable or the step errors,
-   it prints a warning and leaves `#rendered` empty (today's behaviour). The build
-   still succeeds, so a bare checkout without chromium keeps working.
+   **Fail-open:** if Node or jsdom is unavailable or the step errors, it prints a
+   warning and leaves `#rendered` empty (today's behaviour). The build still succeeds,
+   so a bare checkout without `node_modules` keeps working.
 
 3. **`web-app.js`** — **unchanged.** It still calls `render(README)` on load, which
-   overwrites `#rendered` with byte-identical HTML. No hydration/skip logic: re-
-   rendering identical content is invisible and keeps a single code path.
+   overwrites `#rendered` with identical content. No hydration/skip logic: re-rendering
+   identical content is invisible and keeps a single code path.
 
 ### Why not the alternatives
 
-- **Node re-render (marked + DOMPurify/jsdom):** would duplicate `splitFrontmatter`
-  + `buildPropsPanel` (which already carry a "keep in sync with app.js" comment) in
-  a third place → drift. Rejected.
+- **Playwright snapshot (original A):** perfect parity, but forces a browser into the
+  build/freshness path (heavy `smoke` job) or into the Vercel build (fragile). Rejected
+  after grounding.
+- **npm `marked`/`dompurify` packages instead of the vendored files:** risks a version
+  skew between the pre-render and the shipped libs. We `eval` the vendored min.js to
+  guarantee identical versions.
 - **Extract a shared render module:** cleanest long-term but a larger refactor of
-  `web-app.js` than this item warrants. Deferred (could subsume the Node approach later).
+  `web-app.js` than this item warrants. Deferred.
 
 ## Determinism & CI freshness
 
 The README is static input and the `#rendered` output is pure `marked` + `DOMPurify`
 (the rendered pane has **no** hljs highlighting — `marked` has no highlight hook set),
-so the snapshot is deterministic: same README → same HTML. No `Date`/random in the
-output.
+so the render is deterministic: same README → same HTML. No `Date`/random in the output.
 
 The CI **build-freshness** check rebuilds and diffs against the committed files, so it
-must run the same pre-render step → the freshness job needs chromium available, the
-same way the e2e job already does. This is the one integration point to wire in the
-plan.
+must run the same pre-render step. Because Path 3 needs no browser, the fix is small:
+the `smoke` job gains `npm ci` (to install jsdom) before it runs `build.sh` — far
+lighter than a Chromium install. This is the one integration point to wire in the plan.
 
 ## Error handling
 
 | Situation | Behaviour |
 |---|---|
-| chromium / Playwright absent (bare checkout) | Warn, skip pre-render, ship empty `#rendered` (= today). Build succeeds. |
+| Node / jsdom absent (bare checkout, no `node_modules`) | Warn, skip pre-render, ship empty `#rendered` (= today). Build succeeds. |
 | `#rendered` never populates within timeout | Error out the pre-render step (do not ship a half-rendered file); build.sh treats it as the fail-open warning path. |
 | Anchor `<article id="rendered" …></article>` not found exactly once | Hard error — the template changed; fail so it is noticed, not silently skipped. |
 
@@ -117,8 +131,8 @@ README — no new attack surface. The security corpus (PR #22) is unaffected.
 2. **e2e (existing)** — the current split-view / control specs already prove the JS
    render still works; identical content means no behavioural change. No new e2e needed
    for parity, but add one guard: after load, `#rendered` still shows the README H1.
-3. **Freshness** — covered by the existing CI rebuild-and-diff, once chromium is wired
-   into that job.
+3. **Freshness** — covered by the existing CI rebuild-and-diff, once `npm ci` is wired
+   into the `smoke` job (installs jsdom).
 
 ## Out of scope
 
