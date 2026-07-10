@@ -5,6 +5,29 @@ All notable changes to **md-viewer**. Format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0 (`0.x`)
 means the shape can still move. Each release links the pull requests it contains.
 
+## v0.5.0 — 2026-07-10
+
+**Resizable split view, phone-friendly tabs, and a page that reads without JavaScript** · `1b06714`
+
+- The divider between the rendered and the raw pane is now **draggable** — pull it to
+  rebalance the two sides, drag it all the way to either edge to collapse one pane
+  completely (the edge turns red so you can always grab it back), or double-click to
+  snap back to 50/50. It works from the keyboard too. ([#20](https://github.com/neckarshore-mmps/md-viewer/pull/20))
+- Dragging fully to the **right** used to lock the source pane shut with no way to
+  reopen it — the handle slid off the edge of the screen. Fixed: it now pins to the
+  visible edge on both sides, exactly mirroring the left. ([#21](https://github.com/neckarshore-mmps/md-viewer/pull/21))
+- On a **phone**, the rendered and raw panes no longer squeeze into a cramped 50/50 —
+  a simple **[Rendered | Raw]** tab switches between them, each full-width. ([#20](https://github.com/neckarshore-mmps/md-viewer/pull/20))
+- The intro page is now **readable without JavaScript**, so search engines and AI
+  assistants can finally see what md-viewer is — they used to get a blank page. Nothing
+  changes for you: the page still renders the same, just a touch faster. ([#23](https://github.com/neckarshore-mmps/md-viewer/pull/23))
+- **Minor improvements** — small cosmetic polish gathered together, e.g. the toolbar
+  icons now sit a touch apart from their labels. ([#25](https://github.com/neckarshore-mmps/md-viewer/pull/25))
+- Safety, tightened: the automated test that proves a hostile Markdown file can't run
+  code on your machine was broadened from one sample to a large corpus of attack tricks
+  (sneaky links, framed documents, hidden handlers), so a future change can't quietly
+  weaken it. ([#22](https://github.com/neckarshore-mmps/md-viewer/pull/22))
+
 ## v0.4.0 — 2026-07-09
 
 **Images and local links now show up in the Finder tool** · `d936c9b`
