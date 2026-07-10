@@ -19,24 +19,55 @@ function renderViaFinder(fixture: string): string {
 // the malicious corpus. `window.__pwned` is the proof grep cannot give: if any
 // injected payload executed, the browser set the flag and this fails.
 async function assertNothingExecuted(page: Page) {
-  // 1. No injected script ran.
+  // Async payloads (img onerror, iframe/object load, refresh) fire after the
+  // initial render, so give them a bounded window to run before proving the
+  // negative — otherwise a real execution could slip in just after the checks.
+  await page.waitForTimeout(400);
+
+  // 1. No injected script ran — the ground truth grep can never give.
   const pwned = await page.evaluate(() => (window as unknown as { __pwned?: boolean }).__pwned);
   expect(pwned, "an injected payload executed (window.__pwned was set)").toBeUndefined();
 
   // 2. No <script> survived sanitisation in the rendered tree.
   expect(await page.locator("#rendered script").count(), "a <script> survived in #rendered").toBe(0);
 
-  // 3. No inline on* event-handler attribute survived.
+  // 3. No inline on* event-handler attribute survived (on any element).
   const handlerCount = await page.locator("#rendered *").evaluateAll((els) =>
     els.filter((el) => el.getAttributeNames().some((n) => /^on/i.test(n))).length,
   );
   expect(handlerCount, "an inline on* handler survived in #rendered").toBe(0);
 
-  // 4. No javascript: URL survived on a link.
-  expect(
-    await page.locator('#rendered a[href^="javascript:"]').count(),
-    "a javascript: href survived in #rendered",
-  ).toBe(0);
+  // 4. No dangerous-scheme URL survived on ANY navigable/loading attribute —
+  //    not just <a href>. Covers img/object/embed src, iframe srcdoc, and the
+  //    scheme-obfuscation attempts (tab/entity inside the scheme).
+  const badScheme = await page.locator("#rendered *").evaluateAll((els) => {
+    const attrs = ["href", "src", "data", "action", "formaction", "xlink:href", "srcdoc"];
+    const bad = /^(javascript|vbscript|data:text\/html)/i;
+    const hits: string[] = [];
+    for (const el of els) {
+      for (const a of attrs) {
+        const v = el.getAttribute(a);
+        // Strip every control char (tab/newline/null/space) the browser
+        // ignores inside a scheme, then test the prefix — catches mid-scheme
+        // obfuscation like "java\tscript:".
+        const norm = v ? v.replace(/[\u0000-\u0020]+/g, "") : "";
+        if (v && bad.test(norm)) {
+          hits.push(el.tagName.toLowerCase() + "[" + a + "]=" + v.slice(0, 40));
+        }
+      }
+    }
+    return hits;
+  });
+  expect(badScheme, "a dangerous-scheme URL survived in #rendered").toEqual([]);
+
+  // 5. No active-content or navigation-hijacking element survived. A Markdown
+  //    viewer never legitimately needs these; their presence is the attack.
+  for (const tag of ["iframe", "object", "embed", "base", "meta", "form"]) {
+    expect(
+      await page.locator("#rendered " + tag).count(),
+      `a <${tag}> survived in #rendered`,
+    ).toBe(0);
+  }
 }
 
 test.describe("security — untrusted Markdown is interpreted safely", () => {
