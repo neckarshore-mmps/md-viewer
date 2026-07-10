@@ -24,6 +24,15 @@ jobs:
       - name: Make scripts executable
         run: chmod +x build.sh bin/mdview test/smoke.sh test/web-smoke.sh
 
+      # build.sh pre-renders the README into #rendered via jsdom (backlog #9), so the
+      # freshness rebuild below must have jsdom installed to reproduce the committed file.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies (exact, from lockfile)
+        run: npm ci
+
       - name: Committed build artifacts are up to date with src/
         run: |
           ./build.sh
@@ -46,13 +55,15 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install dependencies (exact, from lockfile)
+        run: npm ci
+
+      # After npm ci so build.sh can pre-render #rendered via jsdom (backlog #9) —
+      # e2e then loads the same pre-rendered page the deploy serves.
       - name: Build self-contained artifacts (mdview needs viewer.html)
         run: |
           chmod +x build.sh bin/mdview
           ./build.sh
-
-      - name: Install dependencies (exact, from lockfile)
-        run: npm ci
 
       - name: Cache Playwright browser
         uses: actions/cache@v4
@@ -86,6 +97,14 @@ jobs:
 
       - name: Make scripts executable
         run: chmod +x build.sh bin/mdview test/smoke.sh test/web-smoke.sh
+
+      # web-smoke.sh runs build.sh, which pre-renders via jsdom (backlog #9) — install it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies (exact, from lockfile)
+        run: npm ci
 
       # Capture each suite's OWN reporter output separately. CI's gate prints only
       # web-smoke's ok-lines (smoke.sh + the unit tests run as suppressed rollups inside
