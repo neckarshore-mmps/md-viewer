@@ -26,6 +26,35 @@ test("drag back inward leaves the edge state", async ({ page }) => {
   await expect(page.locator("#divider")).not.toHaveClass(/edge/);
 });
 
+test("drag to far right collapses raw → rendered full, edge stays inside + grabbable", async ({ page }) => {
+  const splitBox = await page.locator(".split").boundingBox();
+  if (!splitBox) throw new Error("split not visible");
+  await dragDividerToX(page, splitBox.x + splitBox.width);   // far right
+  await expect(page.locator("#divider")).toHaveClass(/edge/);
+
+  const rightW = await page.locator(".pane.right").evaluate((el) => el.getBoundingClientRect().width);
+  expect(rightW).toBeLessThan(2);   // raw pane collapsed
+
+  // Regression guard: at p=100 the divider must stay INSIDE the container so it
+  // remains visible (red) and grabbable — it must not be pushed off the right
+  // edge (the bug: left=100% + divider width overflowed the split by ~8px).
+  const inside = await page.locator("#divider").evaluate((el) => {
+    const d = el.getBoundingClientRect();
+    const s = document.querySelector(".split")!.getBoundingClientRect();
+    return d.width > 0 && d.left >= s.left && d.right <= s.right + 1;
+  });
+  expect(inside).toBe(true);
+});
+
+test("drag back inward from the right edge leaves the edge state", async ({ page }) => {
+  const splitBox = await page.locator(".split").boundingBox();
+  if (!splitBox) throw new Error("split not visible");
+  await dragDividerToX(page, splitBox.x + splitBox.width);
+  await expect(page.locator("#divider")).toHaveClass(/edge/);
+  await dragDividerToX(page, splitBox.x + splitBox.width / 2);
+  await expect(page.locator("#divider")).not.toHaveClass(/edge/);
+});
+
 test("double-click resets to ~50/50 and clears the edge", async ({ page }) => {
   await dragDividerToX(page, 0);
   await expect(page.locator("#divider")).toHaveClass(/edge/);
