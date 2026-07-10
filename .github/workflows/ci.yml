@@ -42,6 +42,28 @@ jobs:
       - name: Smoke tests (web + Finder)
         run: ./test/web-smoke.sh
 
+  # AD-42 changelog gate: a PR that changes shipping code must record a user-facing
+  # entry under "## [Unreleased]" in CHANGELOG.md — or carry the 'skip-changelog' label
+  # (the deliberate, auditable bypass). PR-only: push:main has no PR context and the
+  # merge-base diff would be meaningless. fetch-depth: 0 so origin/main + the merge-base
+  # are actually present — a shallow clone would make the gate silently misfire.
+  changelog-gate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Changelog entry gate (AD-42)
+        env:
+          GATE_BASE_REF: ${{ github.event.pull_request.base.sha }}
+          GATE_HEAD_REF: ${{ github.event.pull_request.head.sha }}
+          GATE_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          chmod +x scripts/changelog-gate.sh
+          scripts/changelog-gate.sh
+
   # Real-browser e2e + security layer (Playwright, Chromium only). Dev-only:
   # never touches the shipped artifacts. Proves untrusted Markdown is interpreted
   # safely (the window.__pwned probe grep cannot give) and click-through of the

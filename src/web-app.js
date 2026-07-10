@@ -143,6 +143,21 @@
     render(CHANGELOG, "CHANGELOG.md");
   });
 
+  // Footer build SHA is stamped in at DEPLOY time — Vercel seds the __COMMIT_SHA__
+  // tokens in web/index.html (AD-42 §6: the true build-env SHA, never the changelog's).
+  // On a local / non-deployed build the tokens survive, so show a friendly "dev" and
+  // point the link at the commit history instead of a bogus commit URL.
+  (function () {
+    var link = document.getElementById("verSha");
+    if (!link) return;
+    var code = link.querySelector("code");
+    var sha = code ? code.textContent.trim() : "";
+    if (!/^[0-9a-f]{7,40}$/.test(sha)) {
+      if (code) code.textContent = "dev";
+      link.setAttribute("href", "https://github.com/neckarshore-mmps/md-viewer/commits/main");
+    }
+  })();
+
   // ─── Drag & drop ───────────────────────────────────────────
   var dragDepth = 0;
   window.addEventListener("dragenter", function (e) { e.preventDefault(); dragDepth++; overlay.classList.add("active"); });
