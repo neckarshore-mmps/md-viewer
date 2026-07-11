@@ -103,8 +103,11 @@ emit_web() {
   # DEPLOY time by scripts/vercel-inject-version.sh (wired via web/vercel.json). build.sh
   # leaves the __COMMIT_SHA__ / __COMMIT_SHA_FULL__ deploy tokens untouched so the
   # committed artifact stays churn-free; local preview shows "dev" (web-app.js fallback).
+  # Single awk (not grep|awk): grep exits non-zero on a [Unreleased]-only changelog,
+  # which under `set -euo pipefail` would abort the build before the v0.0.0 fallback.
+  # awk always exits 0 (prints nothing on no match), so the fallback stays reachable.
   local top_ver
-  top_ver=$(grep -m1 -oE '^## v[0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | awk '{print $2}')
+  top_ver=$(awk '/^## v[0-9]+\.[0-9]+\.[0-9]+/ { print $2; exit }' CHANGELOG.md)
   : "${top_ver:=v0.0.0}"
   awk -v v="$top_ver" '{ gsub(/__APP_VERSION__/, v); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
 
