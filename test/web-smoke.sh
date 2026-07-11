@@ -81,12 +81,26 @@ grep -q '>Readme' "$OUT" && pass "Readme label present" || die "Readme label mis
 # Finder tool untouched + still green.
 grep -q "splitFrontmatter" "$OUT" && pass "frontmatter splitter inlined" || die "frontmatter splitter not inlined"
 
-# Changelog / release notes: embedded, wired, and footer version resolved.
-grep -q "id=\"changelog\"" "$OUT" && pass "changelog button present" || die "changelog button missing"
-grep -qE 'ver-tag">v[0-9]+\.[0-9]+\.[0-9]+' "$OUT" && pass "footer version resolved" || die "footer version not resolved"
-grep -qE 'ver-sha">[0-9a-f]{7,40}' "$OUT" && pass "footer SHA resolved" || die "footer SHA not resolved"
-grep -q "__APP_VERSION__\|__APP_SHA__\|__CHANGELOG_B64__" "$OUT" && die "unresolved changelog placeholders remain" || pass "changelog placeholders resolved"
+# Changelog + footer version-info (AD-42 variant A): product · version · commit-linked SHA · Changelog.
+grep -q 'id="changelog"' "$OUT" && pass "Changelog link present" || die "Changelog link missing"
+grep -q 'class="ver-app">md-viewer' "$OUT" && pass "footer product name present" || die "footer product name missing"
+grep -qE 'ver-tag">v[0-9]+\.[0-9]+\.[0-9]+' "$OUT" && pass "footer version resolved from CHANGELOG" || die "footer version not resolved"
+grep -q 'id="verSha"' "$OUT" && pass "footer SHA link present" || die "footer SHA link missing"
+grep -q 'commit/__COMMIT_SHA_FULL__' "$OUT" && pass "SHA is a deploy slot (build-env, not changelog — AD-42 §6)" || die "SHA deploy slot missing"
+# __COMMIT_SHA__ / __COMMIT_SHA_FULL__ are INTENTIONAL deploy slots (resolved at deploy by
+# scripts/vercel-inject-version.sh) — excluded here on purpose. The rest must be resolved.
+grep -qE '__README_B64__|__CHANGELOG_B64__|__APP_VERSION__|__APP_SHA__' "$OUT" \
+  && die "unresolved build placeholder remains" || pass "build placeholders resolved"
 grep -q "mdv-properties" "$OUT" && pass "properties panel styled" || die "properties panel CSS missing"
+
+# Prove the deploy-time SHA injection resolves the tokens (churn-free — runs on a copy).
+inj="$(mktemp)"; cp "$OUT" "$inj"
+VERCEL_GIT_COMMIT_SHA=abcdef1234567890abcdef1234567890abcdef12 \
+  bash "$ROOT/scripts/vercel-inject-version.sh" "$inj" >/dev/null
+grep -q '<code>abcdef1</code>' "$inj" && pass "deploy injects the short SHA" || die "deploy short SHA not injected"
+grep -q 'commit/abcdef1234567890abcdef1234567890abcdef12' "$inj" && pass "deploy injects the commit URL" || die "deploy commit URL not injected"
+grep -qE '__COMMIT_SHA__|__COMMIT_SHA_FULL__' "$inj" && die "deploy tokens survived injection" || pass "all deploy tokens resolved at deploy"
+rm -f "$inj"
 
 echo "==> delegating to Finder smoke test"
 "$ROOT/test/smoke.sh" >/dev/null && pass "Finder smoke test passes" || die "Finder smoke test failed"

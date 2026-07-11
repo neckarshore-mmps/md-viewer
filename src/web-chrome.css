@@ -158,8 +158,11 @@ body {
   text-underline-offset: 2px;
 }
 .foot-link:hover { color: var(--accent); }
+.foot-ver .ver-app { color: inherit; }
 .foot-ver .ver-tag { color: var(--fg); }
-.foot-ver .ver-sha {
+.foot-ver a.ver-sha { text-decoration: none; line-height: 1; }
+.foot-ver .ver-sha code,
+.foot-ver code.ver-sha {
   font-family: var(--font-mono);
   color: var(--accent);
   background: var(--bg);
@@ -167,6 +170,7 @@ body {
   border-radius: 5px;
   padding: 1px 6px;
 }
+.foot-ver a.ver-sha:hover code { border-color: var(--accent); }
 @media (max-width: 640px) {
   .foot-hints { display: none; }
   .foot { justify-content: flex-end; }

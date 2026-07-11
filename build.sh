@@ -90,20 +90,25 @@ emit_web() {
   local readme_b64; readme_b64=$(base64 < README.md | tr -d '\n')
   awk -v r="$readme_b64" '{ gsub(/__README_B64__/, r); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
 
-  # Embed CHANGELOG.md so the footer "changelog" button renders it in the viewer.
+  # Embed CHANGELOG.md so the footer "Changelog" link renders it in the viewer.
   local changelog_b64; changelog_b64=$(base64 < CHANGELOG.md | tr -d '\n')
   awk -v c="$changelog_b64" '{ gsub(/__CHANGELOG_B64__/, c); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
 
-  # Footer version tag + short SHA — single-sourced from CHANGELOG.md's top entry
-  # (line: "## v0.3.0 — 2026-07-06 · `fd8af50`"). No live git SHA → no diff churn.
-  local top_ver top_sha
+  # Footer VERSION — from CHANGELOG.md's top *released* entry (first "## vX.Y.Z",
+  # skipping "## [Unreleased]"). Stable across builds: only a deliberate version cut
+  # changes it, so the committed artifact never churns.
+  #
+  # Footer SHA is deliberately NOT sourced here. AD-42 §6 requires the true build-env
+  # commit SHA (stale under squash-merge if taken from the changelog), injected at
+  # DEPLOY time by scripts/vercel-inject-version.sh (wired via web/vercel.json). build.sh
+  # leaves the __COMMIT_SHA__ / __COMMIT_SHA_FULL__ deploy tokens untouched so the
+  # committed artifact stays churn-free; local preview shows "dev" (web-app.js fallback).
+  local top_ver
   top_ver=$(grep -m1 -oE '^## v[0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | awk '{print $2}')
-  top_sha=$(grep -m1 -oE '`[0-9a-f]{7,40}`' CHANGELOG.md | tr -d '`')
-  : "${top_ver:=v0.0.0}"; : "${top_sha:=unknown}"
-  awk -v v="$top_ver" -v s="$top_sha" \
-      '{ gsub(/__APP_VERSION__/, v); gsub(/__APP_SHA__/, s); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+  : "${top_ver:=v0.0.0}"
+  awk -v v="$top_ver" '{ gsub(/__APP_VERSION__/, v); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
 
-  echo "build.sh: wrote $out ($(wc -c < "$out" | tr -d ' ') bytes) — $top_ver $top_sha"
+  echo "build.sh: wrote $out ($(wc -c < "$out" | tr -d ' ') bytes) — $top_ver (SHA @ deploy)"
 }
 
 # Bake the rendered README into #rendered of web/index.html so non-JS crawlers /

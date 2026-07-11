@@ -2,8 +2,16 @@
 
 All notable changes to **md-viewer**. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
-[Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0 (`0.x`)
-means the shape can still move. Each release links the pull requests it contains.
+[Semantic Versioning](https://semver.org/). Pre-1.0 (`0.x`) means the shape
+can still move. Entries land under **[Unreleased]** per user-facing change;
+each release links the pull requests it contains.
+
+## [Unreleased]
+
+- The page footer now tells you exactly which build you're looking at — the
+  product, its version, and the **commit hash of the deployed build**, linked
+  straight to that commit on GitHub. The hash is stamped in at deploy time, so
+  it always matches what is actually live (never a stale one). ([#28](https://github.com/neckarshore-mmps/md-viewer/pull/28))
 
 ## v0.5.0 — 2026-07-10
 
