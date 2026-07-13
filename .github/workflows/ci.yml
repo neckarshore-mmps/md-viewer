@@ -134,9 +134,18 @@ jobs:
 
       # Capture each suite's OWN reporter output separately. CI's gate prints only
       # web-smoke's ok-lines (smoke.sh + the unit tests run as suppressed rollups inside
-      # it); running each independently exposes the disjoint cascade the contract
-      # counts: web-smoke 33 (e2e) + smoke 19 (integration) + frontmatter 8 (unit)
-      # + url-resolve 19 (unit) = 79.
+      # it); running each independently exposes the disjoint cascade the contract counts.
+      # FOUR disjoint suites feed the emitter — each is executed AND CI-gated (all reachable
+      # from the smoke gate's web-smoke.sh -> smoke.sh chain) and each is captured with its
+      # child's stdout suppressed, so no ok-line is counted twice:
+      #   unit:node        test/frontmatter.test.mjs   (run+suppressed inside smoke.sh)
+      #   unit:node        test/url-resolve.test.mjs    (run+suppressed inside smoke.sh)
+      #   integration:bash test/smoke.sh                (rolls the two unit suites up to 1 ok-line each)
+      #   e2e:bash         test/web-smoke.sh            (rolls smoke.sh up to 1 ok-line)
+      # Do NOT hardcode a per-suite or total count here — the counts drift every time a test
+      # is added (that drift once silently dropped url-resolve from the runners list). The
+      # emitted stats.json is the source of truth; the contract gate below asserts
+      # total == sum(byType).
       # `|| true`: on a red run the reporter is still captured (fewer ok-lines) — the run
       # is flagged red via test_result below and excluded downstream, never counted green.
       - name: Capture reporter output (four disjoint suites)
@@ -160,6 +169,7 @@ jobs:
           test_result: ${{ needs.smoke.result }}
           runners: |
             unit:node:/tmp/frontmatter.out
+            unit:node:/tmp/url-resolve.out
             integration:bash:/tmp/smoke.out
             e2e:bash:/tmp/web-smoke.out
 
