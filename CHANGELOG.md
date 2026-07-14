@@ -8,6 +8,10 @@ each release links the pull requests it contains.
 
 ## [Unreleased]
 
+- Scrolling one pane no longer makes the page **drift or keep scrolling by itself**.
+  The rendered and raw panes now follow each other strictly one-way: the pane you are
+  actually scrolling leads, and the other one just follows — so trackpad momentum can
+  no longer start a tug-of-war between them. ([#31](https://github.com/neckarshore-mmps/md-viewer/pull/31))
 - The page footer now tells you exactly which build you're looking at — the
   product, its version, and the **commit hash of the deployed build**, linked
   straight to that commit on GitHub. The hash is stamped in at deploy time, so
