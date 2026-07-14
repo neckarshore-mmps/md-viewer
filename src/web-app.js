@@ -251,17 +251,28 @@
   // Divider drag + mobile tabs now live in the shared src/split-view.js module.
 
   // ─── Proportional scroll sync between the two panes ────────
+  // Leader-lock: the pane the user is actively scrolling is the "leader" and
+  // drives the other one-way. The follower's echoed scroll events (from setting
+  // its scrollTop, and from trackpad momentum) are ignored until the leader goes
+  // idle. A single `syncing` flag reset on the next animation frame was not
+  // robust — under momentum the echo can arrive after the reset, so the follower
+  // drove the leader back and the non-idempotent float→int round-trip made the
+  // page drift/scroll by itself.
   var left = document.querySelector(".pane.left");
   var right = document.querySelector(".pane.right");
-  var syncing = false;
+  var leader = null;      // the pane currently driving; null when idle
+  var releaseTimer = null;
+  var LEADER_HOLD_MS = 150;   // > one momentum-event gap, imperceptible to switch
   function syncFrom(src, dst) {
-    if (syncing) return;
+    // Ignore the follower entirely while the other pane holds the lead.
+    if (leader && leader !== src) return;
     var srcMax = src.scrollHeight - src.clientHeight;
     var dstMax = dst.scrollHeight - dst.clientHeight;
     if (srcMax <= 0 || dstMax <= 0) return;
-    syncing = true;
+    leader = src;
+    clearTimeout(releaseTimer);
+    releaseTimer = setTimeout(function () { leader = null; }, LEADER_HOLD_MS);
     dst.scrollTop = (src.scrollTop / srcMax) * dstMax;
-    requestAnimationFrame(function () { syncing = false; });
   }
   left.addEventListener("scroll", function () { syncFrom(left, right); });
   right.addEventListener("scroll", function () { syncFrom(right, left); });
