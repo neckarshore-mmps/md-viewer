@@ -104,12 +104,17 @@ jobs:
         run: npx playwright test
 
   # Estate stats.json producer (test-scope facet). Emits a contract-conformant stats.json
-  # to main on every push:main, AFTER the smoke gate. Runs even when smoke fails
+  # to main on every push:main, AFTER the gates. Runs even when a gate fails
   # (if: always) so a non-green run emits red:true — never a stale-green count
   # (stats-json-contract §1). contents:write is scoped to THIS job only; the workflow-level
   # paths-ignore on stats.json breaks the re-trigger loop.
   emit-stats:
-    needs: smoke
+    # BOTH gates, not just smoke. playwright's 16 tests are in `total`, and its count comes
+    # from `--list` (static collection), which reports 16 whether the tests pass or fail.
+    # With `needs: smoke` alone, a RED e2e + green smoke emitted total:106 red:false —
+    # 16 tests counted as green that never ran green. That is the exact stale-green class
+    # the red flag exists to prevent, and adding playwright to the total is what opened it.
+    needs: [smoke, e2e]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -135,25 +140,43 @@ jobs:
       # Capture each suite's OWN reporter output separately. CI's gate prints only
       # web-smoke's ok-lines (smoke.sh + the unit tests run as suppressed rollups inside
       # it); running each independently exposes the disjoint cascade the contract counts.
-      # FOUR disjoint suites feed the emitter — each is executed AND CI-gated (all reachable
-      # from the smoke gate's web-smoke.sh -> smoke.sh chain) and each is captured with its
-      # child's stdout suppressed, so no ok-line is counted twice:
-      #   unit:node        test/frontmatter.test.mjs   (run+suppressed inside smoke.sh)
-      #   unit:node        test/url-resolve.test.mjs    (run+suppressed inside smoke.sh)
-      #   integration:bash test/smoke.sh                (rolls the two unit suites up to 1 ok-line each)
-      #   e2e:bash         test/web-smoke.sh            (rolls smoke.sh up to 1 ok-line)
+      #
+      # FIVE gated suites feed `total`. Each is executed AND CI-gated AND counted exactly
+      # once — the three properties stats-json-contract requires of `total`:
+      #   unit:node        test/frontmatter.test.mjs   (also run+suppressed inside smoke.sh)
+      #   unit:node        test/url-resolve.test.mjs   (also run+suppressed inside smoke.sh)
+      #   integration:bash test/smoke.sh               (gated via web-smoke.sh)
+      #   e2e:bash         test/web-smoke.sh           (the smoke job's gate)
+      #   e2e:playwright   test/e2e/*.spec.ts          (the e2e job)
+      #
+      # DISJOINTNESS IS NOW A PROPERTY OF THE REPORTERS, NOT OF ARITHMETIC HERE.
+      # These comments used to describe the cascade correctly ("rolls the two unit suites
+      # up to 1 ok-line each") one line above claiming "no ok-line is counted twice" — and
+      # the code counted the raw ok-lines anyway, so smoke.sh's 2 rollups and web-smoke.sh's
+      # 1 rollup were each counted twice: once standalone, once as the parent's ok-line
+      # (+3 phantom, the CASCADE-DOUBLE-COUNT shape). Fixed at the source: a suite that
+      # delegates to another suite now prints rollup() ("ok*  - ..."), which is outside the
+      # counter's `^[[:space:]]*ok[[:space:]]+-` regex. The rollup stays visible to a human;
+      # it is simply not a test. Raw ok-count == disjoint truth, with nothing subtracted.
+      #
+      # playwright is counted from its own `--list` ("Total: N tests in M files"), which
+      # collects without a browser — no Chromium install needed in THIS job. The e2e job
+      # executes them for real, and this job gates red on that job's result.
+      #
       # Do NOT hardcode a per-suite or total count here — the counts drift every time a test
-      # is added (that drift once silently dropped url-resolve from the runners list). The
-      # emitted stats.json is the source of truth; the contract gate below asserts
-      # total == sum(byType).
+      # is added (that drift once silently dropped url-resolve from the runners list; the
+      # true total moved 99 -> 106 in four days). The emitted stats.json is the source of
+      # truth; the golden baseline below re-derives it from disk and asserts they agree.
       # `|| true`: on a red run the reporter is still captured (fewer ok-lines) — the run
       # is flagged red via test_result below and excluded downstream, never counted green.
-      - name: Capture reporter output (four disjoint suites)
+      - name: Capture reporter output (five disjoint gated suites + one declared)
         run: |
           node test/frontmatter.test.mjs   > /tmp/frontmatter.out  2>&1 || true
           node test/url-resolve.test.mjs   > /tmp/url-resolve.out   2>&1 || true
           ./test/smoke.sh                   > /tmp/smoke.out        2>&1 || true
           ./test/web-smoke.sh               > /tmp/web-smoke.out    2>&1 || true
+          npx playwright test --list        > /tmp/playwright.out   2>&1 || true
+          ./test/changelog-gate.test.sh     > /tmp/changelog-gate.out 2>&1 || true
 
       # Pinned to the full commit SHA of test-stats-action. Third-party actions are
       # SHA-pinned, never tag-floated. This bumps off 7a53ad0d, whose action.yml embedded a
@@ -166,28 +189,59 @@ jobs:
           repo: ${{ github.repository }}
           out: stats.json
           sha: ${{ github.sha }}
-          test_result: ${{ needs.smoke.result }}
+          # Green ONLY when BOTH gates are green. See the needs: comment above — playwright's
+          # --list count is result-blind, so e2e's result must reach the red flag.
+          test_result: ${{ (needs.smoke.result == 'success' && needs.e2e.result == 'success') && 'success' || 'failure' }}
           runners: |
             unit:node:/tmp/frontmatter.out
             unit:node:/tmp/url-resolve.out
             integration:bash:/tmp/smoke.out
             e2e:bash:/tmp/web-smoke.out
+            e2e:playwright:/tmp/playwright.out
+          # EXECUTED BUT NOT CI-GATED -> held separate, never summed into total.
+          # CI runs the changelog GATE (scripts/changelog-gate.sh, in the changelog-gate job)
+          # but never the test suite OF that gate. The suite is green and real, so it is not
+          # invisible — it is declared. Gating it instead would make it additive and move the
+          # headline; that is a deliberate scope call, not an oversight.
+          declared: |
+            unit:bash:/tmp/changelog-gate.out
 
       # Structural contract gate — invariants that hold on BOTH green and red runs
       # (total == sum(byType); declared held separate; red is boolean; sha present).
-      # Deliberately does NOT assert the golden 54: a red run legitimately undercounts
-      # and must still emit (red:true), so a hard-coded 54 here would block the red emit.
+      # Deliberately does NOT assert a golden total: a red run legitimately undercounts and
+      # must still emit (red:true), so a hard-coded number here would block the red emit.
+      #
+      # THIS GATE CHECKS FORM, NOT TRUTH — and that is precisely its limit. It passed the
+      # 93 emit happily, because 93 == sum(byType) is self-consistent while still being
+      # wrong by 13. Truth is the golden baseline's job, in the step below.
+      #
+      # `declared == {}` was asserted here until changelog-gate.test.sh became declared.
+      # The invariant that actually matters is not "declared is empty" but "declared is
+      # NEVER summed into total" — assert that instead (total == sum(byType) alone, with
+      # declared kept out of it), which is the neckarshore-website 308->87 lesson.
       - name: Validate emitted stats.json against the contract
         run: |
           jq -e --arg repo "$GITHUB_REPOSITORY" '
             .repo == $repo
             and (.audited_sha | type == "string" and length > 0)
-            and (.tests.total == ([.tests.byType[]] | add))
-            and (.tests.declared == {})
+            and (.tests.declared | type == "object")
             and (.red | type == "boolean")
+            # total is exactly the gated runners, and nothing from declared leaks in.
+            and (.tests.total == ([.tests.byType[]] | add))
           ' stats.json > /dev/null \
             || { echo "::error::stats.json failed contract validation"; cat stats.json; exit 1; }
           echo "stats.json is contract-valid:"; cat stats.json
+
+      # GOLDEN BASELINE — the gate the structural contract cannot be: emit == own-runner
+      # disjoint truth at the SAME SHA, recomputed live from the filesystem (never a
+      # committed number, which would be stale on arrival and would fail a CORRECT emitter).
+      # The emitter went 69 -> 93 through a partial fix that stayed self-consistent and sailed
+      # through the contract gate above. This step is what catches wrong-but-consistent.
+      # Runs AFTER the emit so it validates the artifact this run actually produced.
+      - name: Golden baseline — emitted total == own-runner disjoint truth
+        run: |
+          chmod +x scripts/disjoint-baseline.sh
+          ./scripts/disjoint-baseline.sh --check-stats stats.json
 
       # Diff-guard on the meaningful fields only (everything EXCEPT the always-changing
       # updatedAt). A new push has a new audited_sha -> commit (keeps the number fresh);
