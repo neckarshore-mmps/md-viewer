@@ -11,6 +11,16 @@ fail=0
 
 pass() { echo "  ok   - $1"; }
 die()  { echo "  FAIL - $1" >&2; fail=1; }
+# rollup(): a whole CHILD SUITE passed, invoked here with its stdout suppressed.
+# Deliberately NOT an "ok - " line. The estate stats emitter counts one test per
+# "ok - " line per suite (test-stats-action, node/bash family). The child prints its
+# OWN ok-lines when the emitter runs it standalone, so an "ok - " here would count
+# that entire suite a SECOND time, as a single line — the CASCADE-DOUBLE-COUNT shape.
+# The "ok*" prefix keeps the result visible to a human reading this output while
+# staying outside the counter's `^[[:space:]]*ok[[:space:]]+-` regex. Print only —
+# pass/fail semantics are unchanged (the caller still uses rollup/die for the verdict).
+# Use ONLY where another suite is invoked; a self-contained assertion is a pass().
+rollup() { echo "  ok*  - $1 (child suite — counted in its own standalone run)"; }
 
 echo "==> md-viewer smoke test"
 
@@ -59,7 +69,7 @@ rm -f "$out"
 
 # 6. Frontmatter: parser unit test passes and the splitter is wired into the build.
 if node "$ROOT/test/frontmatter.test.mjs" >/dev/null 2>&1; then
-  pass "frontmatter parser unit test"
+  rollup "frontmatter parser unit test"
 else
   die "frontmatter parser unit test failed"
 fi
@@ -67,7 +77,7 @@ grep -q "splitFrontmatter" "$ROOT/viewer.html" && pass "frontmatter splitter inl
 
 # 7. Relative-URL resolver: unit test passes.
 if node "$ROOT/test/url-resolve.test.mjs" >/dev/null 2>&1; then
-  pass "relative-URL resolver unit test"
+  rollup "relative-URL resolver unit test"
 else
   die "relative-URL resolver unit test failed"
 fi

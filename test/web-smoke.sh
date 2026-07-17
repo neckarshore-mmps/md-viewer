@@ -9,6 +9,11 @@ OUT="$ROOT/web/index.html"
 fail=0
 pass() { echo "  ok   - $1"; }
 die()  { echo "  FAIL - $1" >&2; fail=1; }
+# rollup(): see test/smoke.sh for the full rationale. A whole CHILD SUITE passed,
+# invoked with its stdout suppressed. Deliberately NOT an "ok - " line — the emitter
+# runs that child standalone and counts its own ok-lines; an "ok - " here would count
+# the entire child suite a second time as one line (CASCADE-DOUBLE-COUNT).
+rollup() { echo "  ok*  - $1 (child suite — counted in its own standalone run)"; }
 
 echo "==> md-viewer web smoke test"
 "$ROOT/build.sh" >/dev/null
@@ -103,7 +108,7 @@ grep -qE '__COMMIT_SHA__|__COMMIT_SHA_FULL__' "$inj" && die "deploy tokens survi
 rm -f "$inj"
 
 echo "==> delegating to Finder smoke test"
-"$ROOT/test/smoke.sh" >/dev/null && pass "Finder smoke test passes" || die "Finder smoke test failed"
+"$ROOT/test/smoke.sh" >/dev/null && rollup "Finder smoke test passes" || die "Finder smoke test failed"
 
 if [ "$fail" -ne 0 ]; then echo "==> WEB SMOKE TEST FAILED"; exit 1; fi
 echo "==> WEB SMOKE TEST PASSED"
