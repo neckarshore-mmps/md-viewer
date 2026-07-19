@@ -100,8 +100,20 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      # Invoked through the package.json script, not `npx playwright test` directly.
+      # Same command either way (`test:e2e` IS `playwright test`), but the indirection
+      # means package.json stays the single source of truth for how the suite runs —
+      # add a flag there (reporter, retries, --grep) and CI picks it up instead of
+      # silently drifting from the documented entry point.
+      #
+      # It also makes the gating legible to the estate audit
+      # (dev-environment/scripts/check-ci-gating.mjs), which matches a suite to its
+      # workflow by the npm script token. `test:e2e` appeared nowhere in this file, so
+      # a suite that has been genuinely gated all along was reported as ungated. The
+      # audit was right about the text and wrong about the world; this closes the gap
+      # between the two rather than annotating it away.
       - name: e2e + security tests
-        run: npx playwright test
+        run: npm run test:e2e
 
   # Estate stats.json producer (test-scope facet). Emits a contract-conformant stats.json
   # to main on every push:main, AFTER the gates. Runs even when a gate fails
