@@ -1,6 +1,6 @@
 {
   "repo": "neckarshore-mmps/md-viewer",
-  "audited_sha": "9a4c97f2067b4aab246486578d5e5574ed4c95c8",
+  "audited_sha": "9717c4fc43f9354559505cdf184c9fd5ecaa7e5f",
   "red": false,
   "red_detail": null,
   "tests": {
@@ -15,5 +15,5 @@
     },
     "lenses": {}
   },
-  "updatedAt": "2026-07-18T16:37:36Z"
+  "updatedAt": "2026-07-19T11:39:54Z"
 }
