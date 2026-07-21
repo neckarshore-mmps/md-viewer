@@ -92,9 +92,19 @@ grep -q 'class="ver-app">md-viewer' "$OUT" && pass "footer product name present"
 grep -qE 'ver-tag">v[0-9]+\.[0-9]+\.[0-9]+' "$OUT" && pass "footer version resolved from CHANGELOG" || die "footer version not resolved"
 grep -q 'id="verSha"' "$OUT" && pass "footer SHA link present" || die "footer SHA link missing"
 grep -q 'commit/__COMMIT_SHA_FULL__' "$OUT" && pass "SHA is a deploy slot (build-env, not changelog — AD-42 §6)" || die "SHA deploy slot missing"
+
+# Hidden Swiss Grid style guide — the viewer renders it on a double-click of the theme
+# selector (internal design-system reference, deliberately not linked/searchable).
+# Payload is base64 into __STYLE_GUIDE_B64__, so its verbatim token docs never leak into
+# the plaintext greps above (theme-block count, brutalist check).
+grep -qF "$(base64 < "$ROOT/src/web-style-guide.md" | tr -d '\n' | cut -c1-40)" "$OUT" \
+  && pass "style-guide payload embedded" || die "style-guide payload not embedded"
+grep -q 'var STYLE_GUIDE' "$OUT" && pass "style-guide constant present" || die "style-guide constant missing"
+grep -q 'addEventListener("dblclick"' "$OUT" && pass "style-guide hidden trigger wired" || die "style-guide trigger missing"
+
 # __COMMIT_SHA__ / __COMMIT_SHA_FULL__ are INTENTIONAL deploy slots (resolved at deploy by
 # scripts/vercel-inject-version.sh) — excluded here on purpose. The rest must be resolved.
-grep -qE '__README_B64__|__CHANGELOG_B64__|__APP_VERSION__|__APP_SHA__' "$OUT" \
+grep -qE '__README_B64__|__CHANGELOG_B64__|__STYLE_GUIDE_B64__|__APP_VERSION__|__APP_SHA__' "$OUT" \
   && die "unresolved build placeholder remains" || pass "build placeholders resolved"
 grep -q "mdv-properties" "$OUT" && pass "properties panel styled" || die "properties panel CSS missing"
 

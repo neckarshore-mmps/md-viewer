@@ -22,6 +22,7 @@
 
   var README = b64ToUtf8(README_B64);
   var CHANGELOG = b64ToUtf8("__CHANGELOG_B64__");
+  var STYLE_GUIDE = b64ToUtf8("__STYLE_GUIDE_B64__");
 
   // ─── Rendering ─────────────────────────────────────────────
   function render(md, name) {
@@ -229,6 +230,18 @@
   });
   opts.forEach(function (o) {
     o.addEventListener("click", function () { applyTheme(o.getAttribute("data-theme")); closeMenu(); });
+  });
+  // Hidden trigger: double-click the theme selector opens the internal Swiss Grid
+  // style guide — the viewer renders it itself, like Changelog. Forces the Swiss
+  // Grid theme so it shows in its intended skin. Not linked, not searchable: it is
+  // reached only by this gesture ("für mich, keiner soll suchen"). The two clicks
+  // blink the menu open/closed first; we settle it closed, then load the guide.
+  menuBtn.addEventListener("dblclick", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeMenu();
+    applyTheme("swiss");
+    render(STYLE_GUIDE, "style-guide.md");
   });
   document.addEventListener("click", function (e) { if (isOpen() && !menu.contains(e.target)) closeMenu(); });
   document.addEventListener("keydown", function (e) {

@@ -47,6 +47,17 @@ test("readme / changelog content swap", async ({ page }) => {
   await expect(rendered, "readme view should render the README again").toContainText(/Markdown/i);
 });
 
+test("hidden style guide: double-clicking the theme selector opens it in Swiss Grid", async ({ page }) => {
+  const rendered = page.locator("#rendered");
+  // The gesture is intentionally obscure — a double-click on the theme dropdown,
+  // not a link or a menu entry. The two clicks blink the menu; assert the end state.
+  await page.dblclick("#themeMenuBtn");
+  await expect(rendered, "double-click should render the internal style guide").toContainText(
+    "Swiss Grid — Style Guide",
+  );
+  expect(await attr(page, "data-theme"), "the style guide forces the Swiss Grid theme").toBe("swiss");
+});
+
 test("toolbar buttons each render a non-empty icon", async ({ page }) => {
   for (const sel of ["#open", "#readme", "#howto", "#mode", "#themeMenuBtn"]) {
     const svg = page.locator(`${sel} svg`).first();
