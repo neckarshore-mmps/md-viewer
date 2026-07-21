@@ -22,6 +22,7 @@
 
   var README = b64ToUtf8(README_B64);
   var CHANGELOG = b64ToUtf8("__CHANGELOG_B64__");
+  var STYLE_GUIDE = b64ToUtf8("__STYLE_GUIDE_B64__");
 
   // ─── Rendering ─────────────────────────────────────────────
   function render(md, name) {
@@ -223,9 +224,28 @@
   function closeMenu() { menuList.hidden = true; menuBtn.setAttribute("aria-expanded", "false"); opts.forEach(function (o) { o.classList.remove("focus"); }); }
   function isOpen() { return !menuList.hidden; }
 
+  // Single click toggles the menu (instant). Two hidden gestures share the selector:
+  // a DOUBLE click renders the Swiss Grid style guide as Markdown in the viewer; a
+  // TRIPLE click opens the full HTML style-guide page (/style-guide). Disambiguated
+  // via the native click-count (e.detail) with a short settle timer, so a triple never
+  // first fires the double. Not linked, not searchable ("für mich, keiner soll suchen").
+  var sgTimer = null;
   menuBtn.addEventListener("click", function (e) {
     e.stopPropagation();
-    isOpen() ? closeMenu() : openMenu();
+    isOpen() ? closeMenu() : openMenu();        // single click stays instant
+    if (e.detail < 2) return;
+    var clicks = e.detail;                       // 2 = double, 3+ = triple
+    if (sgTimer) clearTimeout(sgTimer);
+    sgTimer = setTimeout(function () {
+      sgTimer = null;
+      closeMenu();
+      if (clicks >= 3) {
+        window.location.href = "/style-guide";                 // triple → HTML page
+      } else {
+        applyTheme("swiss");
+        render(STYLE_GUIDE, "style-guide.md");                 // double → Markdown demo
+      }
+    }, 260);
   });
   opts.forEach(function (o) {
     o.addEventListener("click", function () { applyTheme(o.getAttribute("data-theme")); closeMenu(); });

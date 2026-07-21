@@ -47,6 +47,35 @@ test("readme / changelog content swap", async ({ page }) => {
   await expect(rendered, "readme view should render the README again").toContainText(/Markdown/i);
 });
 
+test("hidden gesture — double-click the theme selector renders the Markdown guide + forces Swiss Grid", async ({ page }) => {
+  const rendered = page.locator("#rendered");
+  // Switch away from Swiss first so "forces swiss" is demonstrable, not incidental.
+  await page.click("#themeMenuBtn");
+  await page.click('.theme-opt[data-theme="minimalist"]');
+  expect(await attr(page, "data-theme")).toBe("minimalist");
+  // Double-click (obscure on purpose). A 260ms settle timer separates it from the
+  // triple-click; toContainText auto-waits past it.
+  await page.click("#themeMenuBtn", { clickCount: 2 });
+  await expect(rendered, "double-click should render the markdown style guide").toContainText(
+    "Swiss Grid — Style Guide",
+  );
+  expect(await attr(page, "data-theme"), "double-click forces the Swiss Grid theme").toBe("swiss");
+});
+
+test("hidden gesture — triple-click the theme selector navigates to the HTML style guide", async ({ page }) => {
+  await page.click("#themeMenuBtn", { clickCount: 3 });
+  await page.waitForURL(/\/style-guide$/);
+  expect(page.url()).toMatch(/\/style-guide$/);
+});
+
+test("HTML style-guide page renders the Swiss Grid design system (standalone, noindex)", async ({ page }) => {
+  await page.goto("/style-guide.html");
+  await expect(page.locator("h1")).toContainText("Swiss Grid — Style Guide");
+  // The standalone HTML page (not the viewer): swatches + component specimens exist.
+  await expect(page.locator(".swatches").first()).toBeVisible();
+  await expect(page.locator("meta[name=robots]")).toHaveAttribute("content", /noindex/);
+});
+
 test("toolbar buttons each render a non-empty icon", async ({ page }) => {
   for (const sel of ["#open", "#readme", "#howto", "#mode", "#themeMenuBtn"]) {
     const svg = page.locator(`${sel} svg`).first();

@@ -17,7 +17,7 @@ for f in "$SRC/head.html" "$SRC/body.html" "$SRC/layout.css" "$SRC/app.js" \
          "$SRC/split-view.js" \
          "$SRC/web-head.html" "$SRC/web-body.html" "$SRC/web-app.js" \
          "$SRC/web-fonts.css" "$SRC/web-themes.css" "$SRC/web-chrome.css" \
-         "$SRC/web-chrome-themes.css" "$SRC/web-md.css" \
+         "$SRC/web-chrome-themes.css" "$SRC/web-md.css" "$SRC/web-style-guide.md" \
          "$VENDOR/github-markdown.css" "$VENDOR/hljs-github-light.css" \
          "$VENDOR/hljs-github-dark.css" "$VENDOR/marked.min.js" \
          "$VENDOR/highlight.min.js" "$VENDOR/markdown.min.js" \
@@ -93,6 +93,11 @@ emit_web() {
   # Embed CHANGELOG.md so the footer "Changelog" link renders it in the viewer.
   local changelog_b64; changelog_b64=$(base64 < CHANGELOG.md | tr -d '\n')
   awk -v c="$changelog_b64" '{ gsub(/__CHANGELOG_B64__/, c); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+
+  # Embed the Swiss Grid style guide — the viewer renders it on the hidden trigger
+  # (double-click the theme selector). Internal design-system reference, not linked.
+  local styleguide_b64; styleguide_b64=$(base64 < "$SRC/web-style-guide.md" | tr -d '\n')
+  awk -v s="$styleguide_b64" '{ gsub(/__STYLE_GUIDE_B64__/, s); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
 
   # Footer VERSION — from CHANGELOG.md's top *released* entry (first "## vX.Y.Z",
   # skipping "## [Unreleased]"). Stable across builds: only a deliberate version cut
