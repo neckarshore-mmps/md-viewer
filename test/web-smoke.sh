@@ -93,14 +93,22 @@ grep -qE 'ver-tag">v[0-9]+\.[0-9]+\.[0-9]+' "$OUT" && pass "footer version resol
 grep -q 'id="verSha"' "$OUT" && pass "footer SHA link present" || die "footer SHA link missing"
 grep -q 'commit/__COMMIT_SHA_FULL__' "$OUT" && pass "SHA is a deploy slot (build-env, not changelog — AD-42 §6)" || die "SHA deploy slot missing"
 
-# Hidden Swiss Grid style guide — the viewer renders it on a double-click of the theme
-# selector (internal design-system reference, deliberately not linked/searchable).
-# Payload is base64 into __STYLE_GUIDE_B64__, so its verbatim token docs never leak into
-# the plaintext greps above (theme-block count, brutalist check).
+# Hidden Swiss Grid style guide. Two gestures on the theme selector: a DOUBLE click
+# renders the guide as Markdown in the viewer; a TRIPLE click opens the HTML page
+# (/style-guide). Deliberately not linked/searchable. The Markdown payload is base64
+# into __STYLE_GUIDE_B64__, so its verbatim token docs never leak into the plaintext
+# greps above (theme-block count, brutalist check).
 grep -qF "$(base64 < "$ROOT/src/web-style-guide.md" | tr -d '\n' | cut -c1-40)" "$OUT" \
-  && pass "style-guide payload embedded" || die "style-guide payload not embedded"
+  && pass "style-guide markdown payload embedded" || die "style-guide markdown payload not embedded"
 grep -q 'var STYLE_GUIDE' "$OUT" && pass "style-guide constant present" || die "style-guide constant missing"
-grep -q 'addEventListener("dblclick"' "$OUT" && pass "style-guide hidden trigger wired" || die "style-guide trigger missing"
+grep -q 'render(STYLE_GUIDE' "$OUT" && pass "double-click → markdown demo wired" || die "double-click markdown trigger missing"
+grep -qF 'window.location.href = "/style-guide"' "$OUT" && pass "triple-click → HTML page wired" || die "triple-click HTML trigger missing"
+
+# The HTML style-guide page itself (static, hand-authored in web/, noindex).
+SG_HTML="$ROOT/web/style-guide.html"
+[ -f "$SG_HTML" ] && pass "web/style-guide.html present" || die "web/style-guide.html missing"
+grep -q 'content="noindex, nofollow"' "$SG_HTML" && pass "style-guide.html is noindex" || die "style-guide.html not noindex"
+grep -q 'Swiss Grid — Style Guide' "$SG_HTML" && pass "style-guide.html has Swiss Grid heading" || die "style-guide.html heading missing"
 
 # __COMMIT_SHA__ / __COMMIT_SHA_FULL__ are INTENTIONAL deploy slots (resolved at deploy by
 # scripts/vercel-inject-version.sh) — excluded here on purpose. The rest must be resolved.
