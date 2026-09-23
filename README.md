@@ -110,6 +110,16 @@ End-to-end smoke test: builds the viewer, runs `mdview` on a fixture, and assert
 the output is well-formed (placeholders resolved, payload embedded, libraries
 inlined, missing-file rejected).
 
+### Estate test-scope stats
+
+This repo is a **producer** for the neckarshore.ai estate test count. On every `push:main`, CI
+counts the five gated suites and publishes a contract-valid `stats.json` to the dedicated
+**[`stats-data`](https://github.com/neckarshore-mmps/md-viewer/blob/stats-data/stats.json)** branch, not to `main`. `main` is protected
+(PRs plus the `smoke` and `e2e` checks), so a bot cannot push to it; the machine artifact lives on
+its own unprotected data branch instead. The aggregator fetches it with `?ref=stats-data`
+(`statsRef` in the website's `stats-config.json`). Contract:
+[`stats-json-contract.md`](https://github.com/neckarshore-ai/neckarshore-planning/blob/main/docs/reference/stats-json-contract.md).
+
 ## Uninstall
 
 ```bash
