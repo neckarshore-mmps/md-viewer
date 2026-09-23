@@ -114,7 +114,7 @@ inlined, missing-file rejected).
 
 This repo is a **producer** for the neckarshore.ai estate test count. On every `push:main`, CI
 counts the five gated suites and publishes a contract-valid `stats.json` to the dedicated
-**[`stats-data`](../../tree/stats-data/stats.json)** branch, not to `main`. `main` is protected
+**[`stats-data`](https://github.com/neckarshore-mmps/md-viewer/blob/stats-data/stats.json)** branch, not to `main`. `main` is protected
 (PRs plus the `smoke` and `e2e` checks), so a bot cannot push to it; the machine artifact lives on
 its own unprotected data branch instead. The aggregator fetches it with `?ref=stats-data`
 (`statsRef` in the website's `stats-config.json`). Contract:
