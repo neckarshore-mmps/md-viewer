@@ -105,6 +105,23 @@ if [ -d test/e2e ]; then
   total=$(( total + pw ))
 fi
 
+# converter/ (Python): pytest's static collection over its testpaths, the same count the
+# emitter reads. Anchored at line start on purpose: with a deselection pytest prints
+# "39/41 tests collected (2 deselected)", which the emitter's pytest handler reads as 41.
+# The anchored match finds no number in that shape, so this step fails loudly instead of
+# agreeing with a miscount. Keep Docling-only tests in converter/heavy_tests, not behind a mark.
+if [ -d converter ]; then
+  ( cd converter && uv run --locked pytest --collect-only -q ) > "$WORK/converter.out" 2>&1 || true
+  cv="$(grep -oE '^[0-9]+ tests? collected' "$WORK/converter.out" | grep -oE '^[0-9]+' | tail -1 || true)"
+  if ! [[ "$cv" =~ ^[0-9]+$ ]] || [ "$cv" -eq 0 ]; then
+    echo "::error::golden: could not parse an unfiltered pytest count for converter/ (deselected tests, or a collection error)."
+    cat "$WORK/converter.out"
+    exit 1
+  fi
+  echo "  gated   - converter (pytest): $cv"
+  total=$(( total + cv ))
+fi
+
 echo "==> golden disjoint total: $total"
 
 # --- compare against the emitted stats.json ---------------------------------------

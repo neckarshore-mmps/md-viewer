@@ -1,0 +1,54 @@
+[project]
+name = "md-converter"
+version = "0.1.0"
+description = "PDF to Markdown with local open-source converters, one result per tool, for the md-viewer comparison view."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "markitdown[pdf]==0.1.9",
+    "pypdfium2==5.15.0",
+]
+
+[project.optional-dependencies]
+# Docling pulls torch: about 1.2 GB on macOS, plus 15 NVIDIA CUDA packages on Linux (uv.lock).
+# Install it where it runs: `uv sync --extra docling`. CI runs without it.
+docling = ["docling==2.148.0"]
+
+[project.scripts]
+md-converter = "md_converter.cli:main"
+
+[build-system]
+requires = ["uv_build==0.13.6"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy==2.4.1",
+    "pip-licenses==5.5.5",
+    "pytest==9.2.0",
+    "ruff==0.17.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+# Docling tests live in heavy_tests/, outside testpaths: `uv run pytest heavy_tests`.
+addopts = "--strict-markers"
+markers = ["integration: runs a real converter through the worker subprocess"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "BLE", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+packages = ["md_converter"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["docling.*", "markitdown.*", "pypdfium2.*"]
+ignore_missing_imports = true
