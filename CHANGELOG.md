@@ -8,6 +8,12 @@ each release links the pull requests it contains.
 
 ## [Unreleased]
 
+- **New: md-converter**, a separate command-line program in [`converter/`](https://github.com/neckarshore-mmps/md-viewer/tree/main/converter)
+  that turns PDFs into Markdown with MarkItDown and Docling, locally and without any paid
+  service. It writes one result per tool next to a copy of the PDF, in exactly the layout the
+  comparison view reads, and never touches the original. A scan without a text layer gives an
+  empty result; a damaged PDF or a crashing tool gives none, so a crash never looks like
+  "no text layer".
 - **New: a comparison view** at [/compare](https://md.neckarshore.ai/compare). Open a PDF
   together with the Markdown or text results of your PDF converters and read them side by
   side: the original on the left, two results on the right, each pane with its own selector

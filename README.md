@@ -90,6 +90,13 @@ are web-app only — the Finder tool keeps its GitHub styling.
 - **DNS:** `md.neckarshore.ai` is a `CNAME` → `cname.vercel-dns.com` at the
   domain's DNS host (Hostinger), matching the existing `www` record.
 
+## PDF converter
+
+The results the compare view shows come from a separate command-line program in
+[`converter/`](https://github.com/neckarshore-mmps/md-viewer/tree/main/converter): `md-converter` turns PDFs into Markdown with
+MarkItDown and Docling, locally and free, one result per tool next to a copy of the PDF.
+The viewer itself never converts anything.
+
 ## Rebuilding after edits
 
 The committed `viewer.html` is generated. After editing anything in `src/` or
