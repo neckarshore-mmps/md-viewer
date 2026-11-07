@@ -47,6 +47,62 @@ Open the folder's files in md.neckarshore.ai/compare.
 Exit codes: `0` all results written or skipped, `1` a document or tool failed, `2` usage error.
 Written paths go to stdout, the per-tool report to stderr.
 
+## Compare one PDF in one step
+
+```bash
+uv run md-converter compare ~/PDFs/report.pdf
+```
+
+Converts the PDF if its results are missing (into `~/md-converter/report/`, or
+`$MD_CONVERTER_OUT`, or `--out`), writes a local copy of md-viewer's comparison page with
+the PDF and every `report.*.md` embedded, and opens it in the default browser. Nothing is
+uploaded; the page is a temp file. If one converter fails, the page still opens with the
+results that exist and the exit code is `1`. `--no-open` prints the page path instead.
+
+### macOS: Finder Quick Action "Compare"
+
+From the md-viewer root, once:
+
+```bash
+(cd converter && uv sync --extra docling)
+./install.sh
+```
+
+Then right-click a PDF in Finder → **Quick Actions → Compare**. `install.sh` also installs
+**View Markdown** for `.md` files; `./uninstall.sh` removes both. Details in the
+[md-viewer README](https://github.com/neckarshore-mmps/md-viewer#install).
+
+### Windows: "Send to"
+
+Not tested on Windows yet (written 2026-11-07, built and tested on macOS). The command
+itself is plain Python; only the Explorer entry differs.
+
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (PowerShell:
+   `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`)
+   and [Git](https://git-scm.com/download/win), then clone and set up once:
+
+   ```bat
+   git clone https://github.com/neckarshore-mmps/md-viewer.git %USERPROFILE%\md-viewer
+   cd %USERPROFILE%\md-viewer\converter
+   uv sync --extra docling
+   ```
+
+2. Press `Win+R`, type `shell:sendto`, Enter. In the folder that opens, create a file
+   `Compare PDF.cmd` with this content:
+
+   ```bat
+   @echo off
+   uv run --quiet --project "%USERPROFILE%\md-viewer\converter" md-converter compare "%~1"
+   if errorlevel 1 pause
+   ```
+
+3. Right-click a PDF in Explorer → **Send to → Compare PDF** (on Windows 11 first
+   **Show more options**, or `Shift+F10`). A console window shows progress and stays open
+   only if something failed.
+
+Results land in `%USERPROFILE%\md-converter\<doc>\`; set `MD_CONVERTER_OUT` to change it.
+Docling on Windows installs torch for CPU; its memory figures below were measured on macOS.
+
 ## What you get in each case
 
 | # | PDF | Result file |

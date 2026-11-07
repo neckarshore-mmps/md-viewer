@@ -2367,6 +2367,21 @@ className:"link",begin:/:\s*/,end:/$/,excludeBegin:!0}]}]}}})()
   });
 
   renderAll();
+
+  // ─── Preloaded set (local "Compare" quick action) ──────────
+  // `md-converter compare <pdf>` writes a local copy of this page with the PDF and its
+  // results embedded as base64 in window.__MDV_COMPARE_FILES__ ([{name, b64}]). They go
+  // through handleFiles like a drop would, so labels and panes behave identically.
+  // The web app never sets this global; there it is a no-op.
+  var preload = window.__MDV_COMPARE_FILES__;
+  if (Array.isArray(preload) && preload.length) {
+    handleFiles(preload.map(function (f) {
+      var bin = atob(f.b64), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var type = /\.pdf$/i.test(f.name) ? "application/pdf" : "text/plain";
+      return new File([bytes], f.name, { type: type });
+    }));
+  }
 })();
 </script>
 </body>
