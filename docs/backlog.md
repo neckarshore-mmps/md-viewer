@@ -1,31 +1,29 @@
 # md-viewer — Backlog
 
-Prioritised list of what's deferred. Treat as the single source of truth for
-"what's next" so future sessions don't re-derive it. Scope: personal power-tool
+**Since 2026-11-07 the backlog is the issues** ([ITSM.md](ITSM.md)). Open work lives there; this file keeps
+the pointer, the decisions not to build, and the history. Scope: personal power-tool
 (with light personal-branding / "building in public" intent) — **not** a product.
 
-## Next up (high value)
+## Moved to issues (2026-11-07)
 
-| # | Item | Why | Notes |
-|---|------|-----|-------|
-| 1 | **Obsidian / GFM feature coverage** | The owner's real files (Obsidian vault, planning docs) use these; the viewer is half-blind to them today | YAML frontmatter is done (Properties panel, v0.3.0). Remaining: Mermaid diagrams, task lists `- [ ]`, callouts `> [!note]`, `[[wikilinks]]`, footnotes, math. Web app + Finder tool. Build as slices — task-lists / callouts / wikilinks first (pure renderer, light); Mermaid + math separately (heavier: Mermaid is a large blob, tension with the "single self-contained file" principle). |
+Each open row of this file became one issue in `in-specification`, its text carried word for word.
 
-## Nice-to-have
+| # | Row | Issue |
+|---|-----|-------|
+| 1 | Obsidian / GFM feature coverage | [#42](https://github.com/neckarshore-mmps/md-viewer/issues/42) |
+| 2 | Copy button on code blocks | [#43](https://github.com/neckarshore-mmps/md-viewer/issues/43) |
+| 3 | Remember last file | [#44](https://github.com/neckarshore-mmps/md-viewer/issues/44) |
+| 4 | Print / PDF export | [#45](https://github.com/neckarshore-mmps/md-viewer/issues/45) |
+| 5 | Real line-number gutter in the source pane | [#46](https://github.com/neckarshore-mmps/md-viewer/issues/46) |
+| 6 | `og:image` for shared-link preview | [#47](https://github.com/neckarshore-mmps/md-viewer/issues/47) |
+| 7 | Minify own JS / reduce the ~220 KB inline blob | [#48](https://github.com/neckarshore-mmps/md-viewer/issues/48) |
 
-| # | Item | Notes |
-|---|------|-------|
-| 2 | Copy button on code blocks | Small JS + button per `<pre>` |
-| 3 | Remember last file | localStorage; only feasible on web via a File System Access handle. (Divider-position persistence: **Won't-do** — owner, 2026-07-10, struck during the split-layout design.) |
-| 4 | Print / PDF export | `@media print` stylesheet + a print button |
-| 5 | Real line-number gutter in the source pane | We shipped the decorative Swiss rail instead; a true per-line gutter is a separate feature |
-| 6 | `og:image` for shared-link preview | Needs a generated preview image; otherwise the social card has no image |
-
-## Performance round (deliberately deferred — Lighthouse already 100 on SEO/A11y/Best-Practices)
+## Decided against
 
 | # | Item | Notes |
 |---|------|-------|
-| 7 | Minify own JS / reduce the ~220 KB inline blob | Trade-off with the "single self-contained file, offline" principle |
 | 8 | ~~Defer hljs highlighting of the default README~~ | **Won't-do** (owner, 2026-07-10). Measured on the ground: highlighting the 5 KB README costs a **median 2.1 ms** on the main thread — far below the 50 ms long-task threshold, on a page already at Lighthouse 100. Deferring 2 ms buys nothing measurable and adds code + test churn. |
+| — | ~~Divider-position persistence~~ | **Won't-do** — owner, 2026-07-10, struck during the split-layout design (was part of row 3). |
 
 ## Done
 
