@@ -8,12 +8,15 @@ from pathlib import Path
 import pytest
 
 from md_converter.cli import EXIT_FAILED, EXIT_OK, EXIT_USAGE, main
-from md_converter.compare_page import DEFAULT_TEMPLATE, build_page, page_files
+from md_converter.compare_page import DEFAULT_TEMPLATE, PRELOAD_MARKER, build_page, page_files
 from md_converter.runner import InvokeResult
 from tests.conftest import fake_invoke
 
 OK: dict[str, InvokeResult] = {"markitdown": (0, b"# mid", ""), "docling": (0, b"# doc", "")}
-TEMPLATE = '<!doctype html><html><head><title>t</title></head><body class="cmp"><main></main></body></html>'
+TEMPLATE = (
+    '<!doctype html><html><head><title>t</title></head><body class="cmp"><!--mdv-compare-preload-->'
+    "<main></main><script>var lib = '<body>';</script></body></html>"
+)
 
 
 def _payload(html: str) -> list[dict[str, str]]:
@@ -37,15 +40,18 @@ def test_build_page_embeds_files_right_after_body(tmp_path: Path) -> None:
     b = tmp_path / "r.docling.md"
     b.write_text("# Ü", encoding="utf-8")
     html = build_page(TEMPLATE, [a, b])
-    assert html.index('<body class="cmp"><script>window.__MDV_COMPARE_FILES__') > 0
+    # At the marker, not at the first "<body" (the inlined library also contains one).
+    assert '<body class="cmp"><script>window.__MDV_COMPARE_FILES__' in html
+    assert PRELOAD_MARKER not in html
     payload = _payload(html)
     assert [f["name"] for f in payload] == ["r.pdf", "r.docling.md"]
     assert base64.b64decode(payload[1]["b64"]).decode("utf-8") == "# Ü"
 
 
-def test_template_without_body_is_refused(tmp_path: Path) -> None:
+@pytest.mark.parametrize("template", ["<html><body></body></html>", PRELOAD_MARKER * 2])
+def test_template_without_exactly_one_marker_is_refused(template: str) -> None:
     with pytest.raises(ValueError):
-        build_page("<html></html>", [])
+        build_page(template, [])
 
 
 def test_page_files_take_the_pdf_and_only_its_own_results(tmp_path: Path) -> None:
@@ -123,6 +129,6 @@ def test_the_real_compare_page_has_the_preload_hook() -> None:
     # Couples this package to md-viewer's built page: if the hook or the body tag goes,
     # the quick action would open an empty page.
     html = DEFAULT_TEMPLATE.read_text(encoding="utf-8")
-    assert "<body" in html
+    assert html.count(PRELOAD_MARKER) == 1
     # The assignment, not just the name: the name also appears in a comment.
     assert "var preload = window.__MDV_COMPARE_FILES__;" in html

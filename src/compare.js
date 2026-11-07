@@ -238,11 +238,20 @@
   // The web app never sets this global; there it is a no-op.
   var preload = window.__MDV_COMPARE_FILES__;
   if (Array.isArray(preload) && preload.length) {
-    handleFiles(preload.map(function (f) {
-      var bin = atob(f.b64), bytes = new Uint8Array(bin.length);
-      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      var type = /\.pdf$/i.test(f.name) ? "application/pdf" : "text/plain";
-      return new File([bytes], f.name, { type: type });
-    }));
+    try {
+      handleFiles(preload.map(function (f) {
+        var bin = atob(f.b64), bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        var type = /\.pdf$/i.test(f.name) ? "application/pdf" : "text/plain";
+        return new File([bytes], f.name, { type: type });
+      }));
+    } catch (err) {
+      // Damaged embedded data: say so instead of leaving an empty page (Linus' review, #54).
+      var note = document.createElement("p");
+      note.className = "cmp-note cmp-preload-error";
+      note.textContent = "The embedded files could not be read. Run md-converter compare again.";
+      pdfBody.textContent = "";
+      pdfBody.appendChild(note);
+    }
   }
 })();

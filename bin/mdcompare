@@ -12,13 +12,17 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONVERTER="$ROOT/converter"
 
+# Titles and messages carry the PDF's filename and converter output, so they are never
+# pasted into AppleScript source: they travel as arguments and are read via `on run argv`.
+# A filename like `x" & do shell script "..." & ".pdf` stays plain text.
 notify() {   # title, message — a macOS notification when run from Finder, stderr otherwise
   if [ -n "${MDCOMPARE_QUIET:-}" ] || ! command -v osascript >/dev/null 2>&1; then
     echo "mdcompare: $1: $2" >&2
     return
   fi
-  local msg="${2//\"/\'}"
-  osascript -e "display notification \"${msg}\" with title \"md-viewer\" subtitle \"$1\"" >/dev/null 2>&1 || true
+  osascript -e 'on run argv' \
+    -e 'display notification (item 2 of argv) with title "md-viewer" subtitle (item 1 of argv)' \
+    -e 'end run' -- "$1" "$2" >/dev/null 2>&1 || true
 }
 
 alert() {    # title, message — a dialog for failures, so they cannot pass unnoticed
@@ -26,8 +30,9 @@ alert() {    # title, message — a dialog for failures, so they cannot pass unn
     echo "mdcompare: $1: $2" >&2
     return
   fi
-  local msg="${2//\"/\'}"
-  osascript -e "display alert \"$1\" message \"${msg}\"" >/dev/null 2>&1 || true
+  osascript -e 'on run argv' \
+    -e 'display alert (item 1 of argv) message (item 2 of argv)' \
+    -e 'end run' -- "$1" "$2" >/dev/null 2>&1 || true
 }
 
 if [ $# -lt 1 ] || [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then

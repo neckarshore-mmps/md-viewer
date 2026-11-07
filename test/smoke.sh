@@ -115,6 +115,21 @@ grep -q -- "run --quiet --project $ROOT/converter md-converter compare $QA_TMP/d
   && pass "mdcompare calls md-converter compare in converter/" || die "mdcompare called uv with: $(cat "$FAKE_UV_ARGS")"
 err="$(PATH="$QA_TMP/bin:$PATH" FAKE_UV_MODE=fail MDCOMPARE_QUIET=1 "$ROOT/bin/mdcompare" "$QA_TMP/doc.pdf" 2>&1 >/dev/null)" && rc=0 || rc=$?
 [ "$rc" -ne 0 ] && echo "$err" | grep -q "not a readable PDF" && pass "mdcompare fails visibly with the reason" || die "mdcompare failure not surfaced (rc=$rc)"
+# A crafted filename must reach osascript as an argument, never inside the -e script source.
+cat > "$QA_TMP/bin/osascript" <<'FAKE'
+#!/usr/bin/env bash
+script=""; while [ $# -gt 0 ]; do case "$1" in -e) script="$script$2"$'\n'; shift 2 ;; --) shift; break ;; *) break ;; esac; done
+printf '%s' "$script" >> "$FAKE_OSA_SCRIPT"; printf '%s\n' "$@" >> "$FAKE_OSA_ARGS"
+FAKE
+chmod +x "$QA_TMP/bin/osascript"
+export FAKE_OSA_SCRIPT="$QA_TMP/osa-script" FAKE_OSA_ARGS="$QA_TMP/osa-args"
+evil='x" & (do shell script "touch pwned") & ".pdf'
+PATH="$QA_TMP/bin:$PATH" FAKE_UV_MODE=fail "$ROOT/bin/mdcompare" "$QA_TMP/$evil" >/dev/null 2>&1 || true
+if [ -s "$FAKE_OSA_SCRIPT" ] && ! grep -q "do shell script" "$FAKE_OSA_SCRIPT" && grep -qF "$evil" "$FAKE_OSA_ARGS"; then
+  pass "mdcompare passes filenames to osascript as arguments, not as script source"
+else
+  die "mdcompare builds AppleScript source from a filename"
+fi
 rm -rf "$QA_TMP"
 
 if [ "$fail" -ne 0 ]; then

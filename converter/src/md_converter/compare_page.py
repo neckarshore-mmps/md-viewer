@@ -12,7 +12,6 @@ from __future__ import annotations
 import base64
 import json
 import os
-import re
 import tempfile
 from pathlib import Path
 
@@ -21,7 +20,9 @@ from md_converter.contract import RESULT_SUFFIXES, doc_stem
 #: md-viewer/web/compare.html, two levels above this package's ``src`` folder.
 DEFAULT_TEMPLATE = Path(__file__).resolve().parents[3] / "web" / "compare.html"
 
-_BODY_OPEN = re.compile(r"<body[^>]*>", re.IGNORECASE)
+#: Written by md-viewer's build.sh right after <body> in web/compare.html. A fixed marker,
+#: not the first "<body" match: an inlined library also contains that text.
+PRELOAD_MARKER = "<!--mdv-compare-preload-->"
 
 
 def template_path() -> Path:
@@ -45,10 +46,9 @@ def build_page(template_html: str, files: list[Path]) -> str:
     # "</" inside a JSON string would end the script element early; "<\/" is the same string.
     data = json.dumps(payload).replace("</", "<\\/")
     script = f"<script>window.__MDV_COMPARE_FILES__ = {data};</script>"
-    match = _BODY_OPEN.search(template_html)
-    if match is None:
-        raise ValueError("compare template has no <body> tag")
-    return template_html[: match.end()] + script + template_html[match.end() :]
+    if template_html.count(PRELOAD_MARKER) != 1:
+        raise ValueError(f"compare template must contain {PRELOAD_MARKER} exactly once; rebuild md-viewer")
+    return template_html.replace(PRELOAD_MARKER, script, 1)
 
 
 def write_page(html: str, stem: str) -> Path:

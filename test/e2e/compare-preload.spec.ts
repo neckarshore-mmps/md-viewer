@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 
 // The local, pre-filled comparison page that `md-converter compare <pdf>` writes (and the
 // Finder quick action / Windows "Send to" open): web/compare.html with the files embedded
-// as window.__MDV_COMPARE_FILES__ right after <body>, opened from file://. This builds the
+// as window.__MDV_COMPARE_FILES__ at the <!--mdv-compare-preload--> marker, opened from file://. This builds the
 // page the same way converter/src/md_converter/compare_page.py does, so the e2e job needs
 // no Python.
 
@@ -16,7 +16,7 @@ const FILES = ["sample.pdf", "sample.alpha.md", "sample.beta.md", "sample.empty.
 function preloadedPage(files: string[]): string {
   const payload = files.map((name) => ({ name, b64: readFileSync(path.join(DIR, name)).toString("base64") }));
   const script = `<script>window.__MDV_COMPARE_FILES__ = ${JSON.stringify(payload).replace(/<\//g, "<\\/")};</script>`;
-  const html = readFileSync(path.resolve("web/compare.html"), "utf8").replace(/<body[^>]*>/i, (m) => m + script);
+  const html = readFileSync(path.resolve("web/compare.html"), "utf8").replace("<!--mdv-compare-preload-->", () => script);
   const out = path.join(mkdtempSync(path.join(os.tmpdir(), "md-compare-")), "sample.compare.html");
   writeFileSync(out, html);
   return pathToFileURL(out).href;
@@ -47,4 +47,15 @@ test("without a preload the web page stays empty", async ({ page }) => {
   await page.goto("/compare.html");
   await expect(page.locator("#cmpPdfName")).not.toHaveText("sample.pdf");
   await expect(page.locator('.cmp-result[data-slot="0"] .cmp-none')).toBeVisible();
+});
+
+test("damaged embedded data shows a note instead of an empty page", async ({ page }) => {
+  const html = readFileSync(path.resolve("web/compare.html"), "utf8").replace(
+    "<!--mdv-compare-preload-->",
+    () => '<script>window.__MDV_COMPARE_FILES__ = [{"name": "x.pdf", "b64": "%%% not base64 %%%"}];</script>',
+  );
+  const out = path.join(mkdtempSync(path.join(os.tmpdir(), "md-compare-")), "broken.compare.html");
+  writeFileSync(out, html);
+  await page.goto(pathToFileURL(out).href);
+  await expect(page.locator("#cmpPdfBody .cmp-preload-error")).toBeVisible();
 });
