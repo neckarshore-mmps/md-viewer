@@ -41,6 +41,11 @@ grep -q '<title>Markdown Viewer' "$OUT" && pass "descriptive web title" || die "
 # How-it-works page + nav link.
 [ -f "$ROOT/web/how-it-works.html" ] && pass "how-it-works page present" || die "how-it-works.html missing"
 grep -q 'href="/how-it-works"' "$OUT" && pass "how-it-works nav link" || die "how-it-works nav link missing"
+HIW="$ROOT/web/how-it-works.html"
+grep -q 'href="/compare"' "$HIW" && pass "how-it-works links the comparison view" || die "how-it-works does not link /compare"
+grep -q 'id="compare-quick-action"' "$HIW" && grep -q 'Quick Actions → Compare' "$HIW" \
+  && pass "how-it-works explains the Compare quick action" || die "how-it-works lacks the Compare quick action"
+grep -q 'md.neckarshore.ai/how-it-works' "$ROOT/web/sitemap.xml" && pass "sitemap lists how-it-works" || die "sitemap misses how-it-works"
 
 # Comparison view (web/compare.html): built, linked from the viewer, same renderer,
 # its own CSP, sitemap entry, and the deploy-time SHA slot resolved like the viewer's.

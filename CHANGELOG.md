@@ -8,6 +8,10 @@ each release links the pull requests it contains.
 
 ## [Unreleased]
 
+- **Updated: [How it works](https://md.neckarshore.ai/how-it-works)** explains the comparison
+  view (how to switch, load files, name results, its limits), where the results come from
+  (md-converter) and the Finder Quick Action **Compare**, with the Windows **Send to** route
+  marked as not yet tested.
 - **New: Finder Quick Action "Compare"** for PDFs. Right-click a PDF, choose Quick Actions →
   Compare, and the comparison view opens with the PDF and its MarkItDown and Docling results
   already loaded; the conversion runs first if the results are missing. `./install.sh` now
