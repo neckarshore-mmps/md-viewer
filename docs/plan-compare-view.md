@@ -27,7 +27,7 @@ md-viewer stays a viewer. Conversion, storage and batch runs are out of scope an
 1. Everything runs in the browser. Files are read with `FileReader` and never sent anywhere, so the promise "nothing is uploaded" holds for this page too.
 2. Results are untrusted input. They pass the same sanitizer as the viewer: no scripts, no inline handlers, no `javascript:` or `data:text/html` URLs. The Playwright malicious corpus runs against a result pane as well.
 3. Links in a result open in a new tab with `rel="noopener noreferrer"`; in-page anchors stay in place.
-4. The page has a Content Security Policy that blocks every remote load: `connect-src 'none'`, `img-src 'self' data: blob:`, `frame-src blob:`. A result cannot fetch a tracking pixel or call home.
+4. The page has a Content Security Policy that blocks every remote load: `connect-src 'self'`, `img-src 'self' data: blob:`, `frame-src blob:`. A result cannot fetch a tracking pixel or call home.
 
 ## Tests
 

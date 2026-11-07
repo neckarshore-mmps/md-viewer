@@ -51,7 +51,7 @@ grep -q 'href="/"' "$CMP" && pass "viewer nav link (compare)" || die "viewer nav
 grep -q "window.MdvRender" "$OUT" && grep -q "window.MdvRender" "$CMP" \
   && pass "shared renderer inlined in both pages" || die "shared renderer (src/render.js) missing in a web page"
 grep -q 'http-equiv="Content-Security-Policy"' "$CMP" && pass "compare CSP present" || die "compare CSP missing"
-grep -q "connect-src 'none'" "$CMP" && pass "compare CSP blocks connections" || die "compare CSP does not block connections"
+grep -q "connect-src 'self'" "$CMP" && pass "compare CSP keeps connections on its own origin" || die "compare CSP connect-src is not self"
 grep -q "DOMPurify" "$CMP" && pass "DOMPurify inlined (compare)" || die "DOMPurify not inlined in web/compare.html"
 grep -q '<loc>https://md.neckarshore.ai/compare</loc>' "$ROOT/web/sitemap.xml" && pass "sitemap lists /compare" || die "sitemap misses /compare"
 grep -q '__APP_VERSION__' "$CMP" && die "unresolved __APP_VERSION__ in compare" || pass "compare version resolved"

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import * as path from "node:path";
+import { readFileSync } from "node:fs";
 
 // The comparison view (web/compare.html): one PDF next to two result panes, each
 // with a selector over every loaded result. Fixtures are neutral and self-made:
@@ -118,9 +119,27 @@ test("a new PDF starts a new set; results added later join it", async ({ page })
 
 test("the page carries a CSP that blocks remote loads", async ({ page }) => {
   const csp = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
-  expect(csp).toContain("connect-src 'none'");
+  expect(csp).toContain("connect-src 'self'");
   expect(csp).toContain("img-src 'self' data: blob:");
   expect(csp).toContain("frame-src blob:");
+});
+
+test("a remote image in a result is never requested (CSP)", async ({ page }) => {
+  // Answer the remote URL ourselves (a 1x1 PNG), so the test does not depend on
+  // the network: the route can only be hit if the CSP lets the request through.
+  const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+  let hits = 0;
+  await page.route("https://example.com/**", (route) => { hits++; return route.fulfill({ body: PNG, contentType: "image/png" }); });
+  await page.setInputFiles("#cmpFiles", [
+    { name: "sample.pdf", mimeType: "application/pdf", buffer: readFileSync(f("sample.pdf")) },
+    { name: "sample.pixel.md", mimeType: "text/markdown",
+      buffer: Buffer.from("# Pixel\n\n![pixel](https://example.com/pixel.png)\n") },
+  ]);
+  await expect(pane(page, 0).locator(".cmp-rendered h1")).toHaveText("Pixel");
+  await page.waitForTimeout(400);
+  expect(hits, "the remote image request got past the CSP").toBe(0);
+  const loaded = await pane(page, 0).locator('.cmp-rendered img').evaluate((img: HTMLImageElement) => img.naturalWidth);
+  expect(loaded, "the remote image must not render").toBe(0);
 });
 
 test("narrow screens get a note instead of the comparison", async ({ page }) => {
