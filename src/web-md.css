@@ -120,7 +120,7 @@
 
 /* ─── Raw source pane (highlight.js, token-driven) ───────────── */
 .pane.right pre { margin: 0; padding: 20px 22px; min-height: 100%; }
-#rawcode {
+.mdv-code {
   font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1.65;
@@ -129,17 +129,17 @@
   color: var(--sfg);
   background: transparent;
 }
-#rawcode .hljs-section        { color: var(--accent); font-weight: 700; }
-#rawcode .hljs-bullet         { color: var(--accent); font-weight: 700; }
-#rawcode .hljs-strong         { color: var(--sfg); font-weight: 700; }
-#rawcode .hljs-emphasis       { font-style: italic; }
-#rawcode .hljs-quote          { color: var(--muted); font-style: italic; }
-#rawcode .hljs-link           { color: var(--punch); text-decoration: underline; }
-#rawcode .hljs-symbol         { color: var(--punch); }
-#rawcode .hljs-code           { color: var(--punch); }
-#rawcode .hljs-comment        { color: var(--muted); }
-#rawcode .hljs-attr,
-#rawcode .hljs-attribute,
-#rawcode .hljs-string         { color: var(--punch); }
-#rawcode .hljs-title,
-#rawcode .hljs-name           { color: var(--accent); }
+.mdv-code .hljs-section        { color: var(--accent); font-weight: 700; }
+.mdv-code .hljs-bullet         { color: var(--accent); font-weight: 700; }
+.mdv-code .hljs-strong         { color: var(--sfg); font-weight: 700; }
+.mdv-code .hljs-emphasis       { font-style: italic; }
+.mdv-code .hljs-quote          { color: var(--muted); font-style: italic; }
+.mdv-code .hljs-link           { color: var(--punch); text-decoration: underline; }
+.mdv-code .hljs-symbol         { color: var(--punch); }
+.mdv-code .hljs-code           { color: var(--punch); }
+.mdv-code .hljs-comment        { color: var(--muted); }
+.mdv-code .hljs-attr,
+.mdv-code .hljs-attribute,
+.mdv-code .hljs-string         { color: var(--punch); }
+.mdv-code .hljs-title,
+.mdv-code .hljs-name           { color: var(--accent); }

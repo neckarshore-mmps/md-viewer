@@ -37,8 +37,8 @@ jobs:
       - name: Committed build artifacts are up to date with src/
         run: |
           ./build.sh
-          git diff --exit-code -- viewer.html web/index.html \
-            || { echo "::error::viewer.html / web/index.html are stale — run ./build.sh and commit."; exit 1; }
+          git diff --exit-code -- viewer.html web/index.html web/compare.html \
+            || { echo "::error::viewer.html / web/index.html / web/compare.html are stale. Run ./build.sh and commit."; exit 1; }
 
       - name: Smoke tests (web + Finder)
         run: ./test/web-smoke.sh

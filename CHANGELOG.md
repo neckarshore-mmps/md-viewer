@@ -8,6 +8,12 @@ each release links the pull requests it contains.
 
 ## [Unreleased]
 
+- **New: a comparison view** at [/compare](https://md.neckarshore.ai/compare). Open a PDF
+  together with the Markdown or text results of your PDF converters and read them side by
+  side: the original on the left, two results on the right, each pane with its own selector
+  and a Rendered / Source switch. A result without any text says "No text layer, OCR not
+  available" instead of failing. Like the viewer, it runs entirely in your browser and
+  nothing is uploaded. Desktop only.
 - Scrolling one pane no longer makes the page **drift or keep scrolling by itself**.
   The rendered and raw panes now follow each other strictly one-way: the pane you are
   actually scrolling leads, and the other one just follows — so trackpad momentum can
