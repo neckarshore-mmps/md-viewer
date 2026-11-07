@@ -82,6 +82,56 @@ else
   die "relative-URL resolver unit test failed"
 fi
 
+# 8. Quick action "Compare": workflow targets PDFs, the installer wires both launchers,
+#    and bin/mdcompare calls md-converter correctly and fails visibly. A fake uv on PATH
+#    stands in for the converter, so this runs on Linux CI without Python.
+CWF="$ROOT/quick-action/Compare.workflow/Contents"
+grep -q "com.adobe.pdf" "$CWF/Info.plist" && pass "Compare quick action accepts PDFs" || die "Compare workflow does not target PDFs"
+grep -q "__MDCOMPARE_BIN__" "$CWF/document.wflow" && pass "Compare workflow calls the mdcompare placeholder" || die "Compare workflow placeholder missing"
+
+QA_TMP="$(mktemp -d "${TMPDIR:-/tmp}/md-qa.XXXXXX")"
+HOME="$QA_TMP/home" "$ROOT/install.sh" >/dev/null
+for wf in "View Markdown" "Compare"; do
+  doc="$QA_TMP/home/Library/Services/$wf.workflow/Contents/document.wflow"
+  if [ -f "$doc" ] && ! grep -q "__MD" "$doc"; then pass "install.sh installs and wires \"$wf\""; else die "install.sh did not wire \"$wf\""; fi
+done
+grep -q "$ROOT/bin/mdcompare" "$QA_TMP/home/Library/Services/Compare.workflow/Contents/document.wflow" \
+  && pass "installed Compare points at bin/mdcompare" || die "installed Compare does not point at bin/mdcompare"
+HOME="$QA_TMP/home" "$ROOT/uninstall.sh" >/dev/null
+[ ! -e "$QA_TMP/home/Library/Services/Compare.workflow" ] && pass "uninstall.sh removes Compare" || die "uninstall.sh left Compare behind"
+
+mkdir -p "$QA_TMP/bin"
+cat > "$QA_TMP/bin/uv" <<'FAKE'
+#!/usr/bin/env bash
+echo "$*" > "$FAKE_UV_ARGS"
+if [ "${FAKE_UV_MODE:-ok}" = "ok" ]; then echo "/tmp/md-compare-x/doc.compare.html"; exit 0; fi
+echo "FAIL doc.pdf: not a readable PDF" >&2; exit 1
+FAKE
+chmod +x "$QA_TMP/bin/uv"
+export FAKE_UV_ARGS="$QA_TMP/uv-args"
+out="$(PATH="$QA_TMP/bin:$PATH" MDCOMPARE_QUIET=1 MDCOMPARE_NO_OPEN=1 "$ROOT/bin/mdcompare" "$QA_TMP/doc.pdf" 2>/dev/null)" && rc=0 || rc=$?
+[ "$rc" -eq 0 ] && [ "$out" = "/tmp/md-compare-x/doc.compare.html" ] && pass "mdcompare prints the page path" || die "mdcompare did not print the page path (rc=$rc)"
+grep -q -- "run --quiet --project $ROOT/converter md-converter compare $QA_TMP/doc.pdf --no-open" "$FAKE_UV_ARGS" \
+  && pass "mdcompare calls md-converter compare in converter/" || die "mdcompare called uv with: $(cat "$FAKE_UV_ARGS")"
+err="$(PATH="$QA_TMP/bin:$PATH" FAKE_UV_MODE=fail MDCOMPARE_QUIET=1 "$ROOT/bin/mdcompare" "$QA_TMP/doc.pdf" 2>&1 >/dev/null)" && rc=0 || rc=$?
+[ "$rc" -ne 0 ] && echo "$err" | grep -q "not a readable PDF" && pass "mdcompare fails visibly with the reason" || die "mdcompare failure not surfaced (rc=$rc)"
+# A crafted filename must reach osascript as an argument, never inside the -e script source.
+cat > "$QA_TMP/bin/osascript" <<'FAKE'
+#!/usr/bin/env bash
+script=""; while [ $# -gt 0 ]; do case "$1" in -e) script="$script$2"$'\n'; shift 2 ;; --) shift; break ;; *) break ;; esac; done
+printf '%s' "$script" >> "$FAKE_OSA_SCRIPT"; printf '%s\n' "$@" >> "$FAKE_OSA_ARGS"
+FAKE
+chmod +x "$QA_TMP/bin/osascript"
+export FAKE_OSA_SCRIPT="$QA_TMP/osa-script" FAKE_OSA_ARGS="$QA_TMP/osa-args"
+evil='x" & (do shell script "touch pwned") & ".pdf'
+PATH="$QA_TMP/bin:$PATH" FAKE_UV_MODE=fail "$ROOT/bin/mdcompare" "$QA_TMP/$evil" >/dev/null 2>&1 || true
+if [ -s "$FAKE_OSA_SCRIPT" ] && ! grep -q "do shell script" "$FAKE_OSA_SCRIPT" && grep -qF "$evil" "$FAKE_OSA_ARGS"; then
+  pass "mdcompare passes filenames to osascript as arguments, not as script source"
+else
+  die "mdcompare builds AppleScript source from a filename"
+fi
+rm -rf "$QA_TMP"
+
 if [ "$fail" -ne 0 ]; then
   echo "==> SMOKE TEST FAILED"
   exit 1
