@@ -42,6 +42,21 @@ grep -q '<title>Markdown Viewer' "$OUT" && pass "descriptive web title" || die "
 [ -f "$ROOT/web/how-it-works.html" ] && pass "how-it-works page present" || die "how-it-works.html missing"
 grep -q 'href="/how-it-works"' "$OUT" && pass "how-it-works nav link" || die "how-it-works nav link missing"
 
+# Comparison view (web/compare.html): built, linked from the viewer, same renderer,
+# its own CSP, sitemap entry, and the deploy-time SHA slot resolved like the viewer's.
+CMP="$ROOT/web/compare.html"
+[ -f "$CMP" ] && pass "web/compare.html built" || die "web/compare.html missing"
+grep -q 'href="/compare"' "$OUT" && pass "compare nav link (viewer)" || die "compare nav link missing in web/index.html"
+grep -q 'href="/"' "$CMP" && pass "viewer nav link (compare)" || die "viewer nav link missing in web/compare.html"
+grep -q "window.MdvRender" "$OUT" && grep -q "window.MdvRender" "$CMP" \
+  && pass "shared renderer inlined in both pages" || die "shared renderer (src/render.js) missing in a web page"
+grep -q 'http-equiv="Content-Security-Policy"' "$CMP" && pass "compare CSP present" || die "compare CSP missing"
+grep -q "connect-src 'self'" "$CMP" && pass "compare CSP keeps connections on its own origin" || die "compare CSP connect-src is not self"
+grep -q "DOMPurify" "$CMP" && pass "DOMPurify inlined (compare)" || die "DOMPurify not inlined in web/compare.html"
+grep -q '<loc>https://md.neckarshore.ai/compare</loc>' "$ROOT/web/sitemap.xml" && pass "sitemap lists /compare" || die "sitemap misses /compare"
+grep -q '__APP_VERSION__' "$CMP" && die "unresolved __APP_VERSION__ in compare" || pass "compare version resolved"
+grep -q 'compare.html' "$ROOT/web/vercel.json" && pass "deploy injects the SHA into compare.html" || die "vercel.json does not inject compare.html"
+
 # README embedded (base64 prefix of README.md must appear; no leftover placeholder).
 grep -qF "$(base64 < "$ROOT/README.md" | tr -d '\n' | cut -c1-40)" "$OUT" && pass "README payload embedded" || die "README not embedded"
 grep -q "__README_B64__" "$OUT" && die "unresolved __README_B64__ placeholder" || pass "README placeholder resolved"

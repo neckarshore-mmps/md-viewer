@@ -77,6 +77,10 @@ It shares the split view with the Finder tool and adds:
    source below).
 6. **Synced scrolling** — scrolling either pane drives the other proportionally.
 7. **Fixed footer** + drag-and-drop + paste, all fully client-side.
+8. **Compare view** at [/compare](https://md.neckarshore.ai/compare): open one PDF and the
+   Markdown or text results of your PDF converters and read them side by side. Two
+   result panes, each with a selector, so any number of tools fits; with one result
+   it is a plain PDF and Markdown view. Desktop only, and nothing is uploaded either.
 
 Fonts are self-hosted (`web/fonts/`), so the app stays offline-capable. Themes
 are web-app only — the Finder tool keeps its GitHub styling.
