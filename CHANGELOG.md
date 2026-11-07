@@ -8,6 +8,11 @@ each release links the pull requests it contains.
 
 ## [Unreleased]
 
+- **Updated: [How it works](https://md.neckarshore.ai/how-it-works)** explains the comparison
+  view (how to switch, load files, name results, its limits), where the results come from
+  (md-converter) and the Finder Quick Action **Compare**, with the Windows **Send to** route
+  marked as not yet tested.
+
 - **New: md-converter**, a separate command-line program in [`converter/`](https://github.com/neckarshore-mmps/md-viewer/tree/main/converter)
   that turns PDFs into Markdown with MarkItDown and Docling, locally and without any paid
   service. It writes one result per tool next to a copy of the PDF, in exactly the layout the
