@@ -13,7 +13,7 @@ each release links the pull requests it contains.
   side: the original on the left, two results on the right, each pane with its own selector
   and a Rendered / Source switch. A result without any text says "No text layer, OCR not
   available" instead of failing. Like the viewer, it runs entirely in your browser and
-  nothing is uploaded. Desktop only.
+  nothing is uploaded. Desktop only. ([#50](https://github.com/neckarshore-mmps/md-viewer/pull/50))
 - Scrolling one pane no longer makes the page **drift or keep scrolling by itself**.
   The rendered and raw panes now follow each other strictly one-way: the pane you are
   actually scrolling leads, and the other one just follows — so trackpad momentum can
