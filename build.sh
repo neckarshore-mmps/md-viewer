@@ -174,6 +174,9 @@ emit_compare() {
     echo '/* --- markdown + highlight --- */'; cat "$SRC/web-md.css"
     echo '/* --- compare --- */'; cat "$SRC/compare.css"
     echo '</style>'; echo '</head>'; echo '<body>'
+    # Insertion point for `md-converter compare` (converter/src/md_converter/compare_page.py):
+    # a local copy puts its embedded files here. Unique by construction; a no-op on the web.
+    echo '<!--mdv-compare-preload-->'
     cat "$SRC/compare-body.html"
     emit_libs
     emit_web_shared

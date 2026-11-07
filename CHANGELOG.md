@@ -12,7 +12,11 @@ each release links the pull requests it contains.
   view (how to switch, load files, name results, its limits), where the results come from
   (md-converter) and the Finder Quick Action **Compare**, with the Windows **Send to** route
   marked as not yet tested.
-
+- **New: Finder Quick Action "Compare"** for PDFs. Right-click a PDF, choose Quick Actions →
+  Compare, and the comparison view opens with the PDF and its MarkItDown and Docling results
+  already loaded; the conversion runs first if the results are missing. `./install.sh` now
+  installs it next to "View Markdown". On Windows the same works from the Explorer "Send to"
+  menu, described in the converter README (not yet tested on Windows).
 - **New: md-converter**, a separate command-line program in [`converter/`](https://github.com/neckarshore-mmps/md-viewer/tree/main/converter)
   that turns PDFs into Markdown with MarkItDown and Docling, locally and without any paid
   service. It writes one result per tool next to a copy of the PDF, in exactly the layout the
