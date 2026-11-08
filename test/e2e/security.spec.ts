@@ -18,7 +18,7 @@ function renderViaFinder(fixture: string): string {
 // The load-bearing security assertions, run against whichever surface rendered
 // the malicious corpus. `window.__pwned` is the proof grep cannot give: if any
 // injected payload executed, the browser set the flag and this fails.
-async function assertNothingExecuted(page: Page) {
+async function assertNothingExecuted(page: Page, root = "#rendered") {
   // Async payloads (img onerror, iframe/object load, refresh) fire after the
   // initial render, so give them a bounded window to run before proving the
   // negative — otherwise a real execution could slip in just after the checks.
@@ -29,18 +29,18 @@ async function assertNothingExecuted(page: Page) {
   expect(pwned, "an injected payload executed (window.__pwned was set)").toBeUndefined();
 
   // 2. No <script> survived sanitisation in the rendered tree.
-  expect(await page.locator("#rendered script").count(), "a <script> survived in #rendered").toBe(0);
+  expect(await page.locator(root + " script").count(), "a <script> survived in " + root).toBe(0);
 
   // 3. No inline on* event-handler attribute survived (on any element).
-  const handlerCount = await page.locator("#rendered *").evaluateAll((els) =>
+  const handlerCount = await page.locator(root + " *").evaluateAll((els) =>
     els.filter((el) => el.getAttributeNames().some((n) => /^on/i.test(n))).length,
   );
-  expect(handlerCount, "an inline on* handler survived in #rendered").toBe(0);
+  expect(handlerCount, "an inline on* handler survived in " + root).toBe(0);
 
   // 4. No dangerous-scheme URL survived on ANY navigable/loading attribute —
   //    not just <a href>. Covers img/object/embed src, iframe srcdoc, and the
   //    scheme-obfuscation attempts (tab/entity inside the scheme).
-  const badScheme = await page.locator("#rendered *").evaluateAll((els) => {
+  const badScheme = await page.locator(root + " *").evaluateAll((els) => {
     const attrs = ["href", "src", "data", "action", "formaction", "xlink:href", "srcdoc"];
     const bad = /^(javascript|vbscript|data:text\/html)/i;
     const hits: string[] = [];
@@ -58,14 +58,14 @@ async function assertNothingExecuted(page: Page) {
     }
     return hits;
   });
-  expect(badScheme, "a dangerous-scheme URL survived in #rendered").toEqual([]);
+  expect(badScheme, "a dangerous-scheme URL survived in " + root).toEqual([]);
 
   // 5. No active-content or navigation-hijacking element survived. A Markdown
   //    viewer never legitimately needs these; their presence is the attack.
   for (const tag of ["iframe", "object", "embed", "base", "meta", "form"]) {
     expect(
-      await page.locator("#rendered " + tag).count(),
-      `a <${tag}> survived in #rendered`,
+      await page.locator(root + " " + tag).count(),
+      `a <${tag}> survived in ${root}`,
     ).toBe(0);
   }
 }
@@ -82,6 +82,17 @@ test.describe("security — untrusted Markdown is interpreted safely", () => {
     await page.setInputFiles("#file", path.join(FIXTURES, "malicious.md"));
     await expect(page.locator("#rendered")).toContainText("normal paragraph");
     await assertNothingExecuted(page);
+  });
+
+  test("Comparison view neutralises the malicious corpus in a result pane", async ({ page }) => {
+    await page.goto("/compare.html");
+    await page.setInputFiles("#cmpFiles", [
+      path.join(FIXTURES, "compare", "sample.pdf"),
+      path.join(FIXTURES, "malicious.md"),
+    ]);
+    const root = '.cmp-result[data-slot="0"] .cmp-rendered';
+    await expect(page.locator(root)).toContainText("normal paragraph");
+    await assertNothingExecuted(page, root);
   });
 
   test("relative-URL containment holds at runtime (the #18 fix)", async ({ page }) => {

@@ -1,44 +1,51 @@
 #!/usr/bin/env bash
-# install.sh — install the "View Markdown" Finder Quick Action.
-# Copies the .workflow bundle into ~/Library/Services/, wires in the absolute
-# path to bin/mdview, validates the plists, and refreshes the Services cache.
+# install.sh — install the Finder Quick Actions "View Markdown" (for .md) and
+# "Compare" (for .pdf). Copies each .workflow bundle into ~/Library/Services/,
+# wires in the absolute path to its launcher in bin/, validates the plists and
+# refreshes the Services cache. "Compare" also needs the converter installed:
+# see converter/README.md (cd converter && uv sync --extra docling).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MDVIEW="$ROOT/bin/mdview"
-SRC_WF="$ROOT/quick-action/View Markdown.workflow"
 DEST_DIR="$HOME/Library/Services"
-DEST_WF="$DEST_DIR/View Markdown.workflow"
 
 echo "==> md-viewer install"
 
-# 1. Ensure the viewer is built and the launcher is executable.
-chmod +x "$MDVIEW" "$ROOT/build.sh"
-if [ ! -f "$ROOT/viewer.html" ]; then
-  echo "    building viewer.html ..."
+# 1. Ensure the pages are built and the launchers are executable.
+chmod +x "$ROOT/bin/mdview" "$ROOT/bin/mdcompare" "$ROOT/build.sh"
+if [ ! -f "$ROOT/viewer.html" ] || [ ! -f "$ROOT/web/compare.html" ]; then
+  echo "    building viewer.html and web/compare.html ..."
   "$ROOT/build.sh"
 fi
-
-# 2. Copy the workflow bundle into place (replace any previous install).
 mkdir -p "$DEST_DIR"
-rm -rf "$DEST_WF"
-cp -R "$SRC_WF" "$DEST_WF"
 
-# 3. Wire the real mdview path into the installed workflow.
-WF_DOC="$DEST_WF/Contents/document.wflow"
-# Use a temp file; mdview path contains slashes so use '|' as sed delimiter.
-sed "s|__MDVIEW_BIN__|$MDVIEW|g" "$WF_DOC" > "$WF_DOC.tmp" && mv "$WF_DOC.tmp" "$WF_DOC"
+# 2. One workflow per quick action: name | placeholder | launcher.
+install_workflow() {
+  local name="$1" placeholder="$2" launcher="$3"
+  local src="$ROOT/quick-action/$name.workflow" dest="$DEST_DIR/$name.workflow"
+  rm -rf "$dest"
+  cp -R "$src" "$dest"
+  local doc="$dest/Contents/document.wflow"
+  # The launcher path contains slashes, so '|' is the sed delimiter.
+  sed "s|$placeholder|$launcher|g" "$doc" > "$doc.tmp" && mv "$doc.tmp" "$doc"
+  # Validate both plists — fail loudly if malformed (plutil exists on macOS only).
+  if command -v plutil >/dev/null 2>&1; then
+    plutil -lint "$dest/Contents/Info.plist" >/dev/null
+    plutil -lint "$doc" >/dev/null
+  fi
+  echo "    installed: $dest"
+}
 
-# 4. Validate both plists — fail loudly if malformed.
-plutil -lint "$DEST_WF/Contents/Info.plist" >/dev/null
-plutil -lint "$WF_DOC" >/dev/null
+install_workflow "View Markdown" "__MDVIEW_BIN__" "$ROOT/bin/mdview"
+install_workflow "Compare" "__MDCOMPARE_BIN__" "$ROOT/bin/mdcompare"
 
-# 5. Refresh the Services / Quick Actions registry.
+# 3. Refresh the Services / Quick Actions registry.
 /System/Library/CoreServices/pbs -flush >/dev/null 2>&1 || true
 
-echo "==> Installed to: $DEST_WF"
-echo "    mdview path : $MDVIEW"
 echo ""
-echo "Next: right-click a .md file in Finder -> Quick Actions -> \"View Markdown\"."
-echo "If it does not appear yet, check System Settings > Keyboard > Keyboard"
-echo "Shortcuts > Services > Files and Folders, and enable \"View Markdown\"."
+echo "Next:"
+echo "  - right-click a .md file in Finder -> Quick Actions -> \"View Markdown\""
+echo "  - right-click a .pdf file in Finder -> Quick Actions -> \"Compare\""
+echo "    (first set up the converter once: cd \"$ROOT/converter\" && uv sync --extra docling)"
+echo "If an entry does not appear, check System Settings > Keyboard > Keyboard"
+echo "Shortcuts > Services > Files and Folders, and enable it there."

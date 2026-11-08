@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How md-viewer works</title>
-<meta name="description" content="How md-viewer turns a Markdown file into a scroll-synced split view: base64 → inject → marked + DOMPurify (rendered) and highlight.js (source). Offline, safe, token-themed.">
+<meta name="description" content="How md-viewer turns a Markdown file into a scroll-synced split view: base64 → inject → marked + DOMPurify (rendered) and highlight.js (source). Offline, safe, token-themed. Plus a comparison view for PDF-to-Markdown converters.">
 <link rel="canonical" href="https://md.neckarshore.ai/how-it-works">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%84%3C/text%3E%3C/svg%3E">
 <script>
@@ -134,6 +134,8 @@
     border-left: 3px solid var(--accent); background: var(--panel);
     padding: 12px 16px; font-size: 13.5px; color: var(--ink); margin: 0 0 20px;
   }
+  .note.after { margin: 20px 0 0; }
+  .nb { white-space: nowrap; }
 
   @media (max-width: 720px) {
     .topbar, header, section, footer { padding-left: 22px; padding-right: 22px; }
@@ -179,6 +181,7 @@
           <li><b>1</b><span>Drag &amp; drop · paste (⌘V) · file picker</span></li>
           <li><b>2</b><span>Repo README renders by default</span></li>
           <li><b>3</b><span>Nothing is uploaded — it all runs in your browser</span></li>
+          <li><b>4</b><span>Compare at <code>/compare</code>: a PDF next to two converter results</span></li>
         </ul>
       </div>
     </div>
@@ -251,12 +254,55 @@
     </div>
   </section>
 
+  <section id="compare">
+    <div class="sec-head"><span class="num">05</span><h2>Compare converter results next to the PDF</h2></div>
+    <p class="note">The comparison view at <a href="/compare">/compare</a> puts an original PDF
+    next to two Markdown results, so you can see which converter kept the headings, tables and
+    reading order. It only displays: the results come from a separate converter.</p>
+    <div class="cards">
+      <div class="card"><h4><span class="dot"></span>Switch between the views</h4><p><strong>Compare</strong> in the viewer's top bar opens the comparison view; <strong>Viewer</strong> takes you back.</p></div>
+      <div class="card"><h4><span class="dot"></span>Load a PDF and its results</h4><p><strong>Open files</strong>, or drop the PDF and its results onto the page at once. Each result column has its own selector and a <strong>Rendered / Source</strong> switch; <strong>1:1</strong> shows one result next to the PDF.</p></div>
+      <div class="card"><h4><span class="dot"></span>Name results after their tool</h4><p>Put <code>&lt;doc&gt;.&lt;tool&gt;.md</code> beside <code>&lt;doc&gt;.pdf</code>, for example <code>report.docling.md</code> and <code>report.markitdown.md</code>. A <code>.txt</code> result is shown as plain text. An empty result says <em>No text layer, OCR not available.</em></p></div>
+      <div class="card"><h4><span class="dot"></span>Results from md-converter</h4><p><a href="https://github.com/neckarshore-mmps/md-viewer/tree/main/converter">md-converter</a> turns PDFs into Markdown with MarkItDown and Docling, on your machine, with no API key: <code>uv run md-converter convert ~/PDFs <span class="nb">--out ~/converted</span></code></p></div>
+      <div class="card"><h4><span class="dot"></span>Limits</h4><p>Desktop screens from 1024&nbsp;px wide. Not in Firefox. Nothing is uploaded: the PDF and the results stay in your browser.</p></div>
+    </div>
+  </section>
+
+  <section id="compare-quick-action">
+    <div class="sec-head"><span class="num">06</span><h2>Compare a PDF straight from Finder</h2></div>
+    <p class="note"><code>./install.sh</code> installs two Finder Quick Actions:
+    <strong>View Markdown</strong> for <code>.md</code> files, the split view as before, and
+    <strong>Compare</strong> for <code>.pdf</code> files.</p>
+    <div class="lanes">
+      <div class="lane">
+        <h3>Compare <span class="tag">macOS</span></h3>
+        <p>Right-click a PDF → <strong>Quick Actions → Compare</strong>.</p>
+        <ul class="steps">
+          <li><b>1</b><span>Converts the PDF with MarkItDown and Docling, if its results are missing</span></li>
+          <li><b>2</b><span>Results go to <code class="nb">~/md-converter/&lt;doc&gt;/</code> (change it with <code>MD_CONVERTER_OUT</code>); the PDF itself is never written</span></li>
+          <li><b>3</b><span>Opens the comparison view with the PDF and both results already loaded</span></li>
+        </ul>
+      </div>
+      <div class="lane">
+        <h3>How it works <span class="tag">local</span></h3>
+        <p><code>md-converter compare &lt;pdf&gt;</code> writes a local copy of the comparison page
+        with the PDF and its results embedded, as a temporary file, and opens it in your default
+        browser. Nothing is uploaded. It is the same pattern the Markdown Quick Action uses for
+        the viewer.</p>
+      </div>
+    </div>
+    <p class="note after">Windows: the same command through Explorer's
+    <strong>Send to</strong> menu, with a small <code>.cmd</code> file in <code>shell:sendto</code>.
+    Setup in the <a href="https://github.com/neckarshore-mmps/md-viewer/tree/main/converter#windows-send-to">converter README</a>.
+    Not tested on Windows yet.</p>
+  </section>
+
   <footer>
     <a class="cta" href="/">Open the viewer →</a>
     <div><span class="foot-note">Built with</span></div>
     <div class="stack">
       <span>marked</span><span>DOMPurify</span><span>highlight.js</span><span>jsdom</span><span>IBM&nbsp;Plex</span>
-      <span>Bash / Automator</span><span>Vercel</span><span>File&nbsp;System&nbsp;Access&nbsp;API</span>
+      <span>MarkItDown</span><span>Docling</span><span>Bash / Automator</span><span>Vercel</span><span>File&nbsp;System&nbsp;Access&nbsp;API</span>
     </div>
   </footer>
 </div>

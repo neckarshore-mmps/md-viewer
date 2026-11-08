@@ -11,8 +11,6 @@
   var fileInput = document.getElementById("file");
   var root = document.documentElement;
 
-  if (window.marked) marked.setOptions({ gfm: true, breaks: false });
-
   function b64ToUtf8(b64) {
     var bin = atob(b64);
     var bytes = new Uint8Array(bin.length);
@@ -24,83 +22,13 @@
   var CHANGELOG = b64ToUtf8("__CHANGELOG_B64__");
   var STYLE_GUIDE = b64ToUtf8("__STYLE_GUIDE_B64__");
 
-  // ─── Rendering ─────────────────────────────────────────────
+  // ─── Rendering (shared pipeline: src/render.js) ─────────────
   function render(md, name) {
     filename.textContent = name || "Markdown";
     document.title = (name ? name + " — " : "") + "Markdown Viewer";
-    // Split leading YAML frontmatter off so marked doesn't render the raw
-    // --- block as a heading; the raw pane still shows the full source.
-    var fm = splitFrontmatter(md);
-    var html = window.marked ? marked.parse(fm.body) : fm.body;
-    if (window.DOMPurify) html = DOMPurify.sanitize(html);
-    rendered.innerHTML = html;
-    if (fm.props && fm.props.length) {
-      rendered.insertBefore(buildPropsPanel(fm.props), rendered.firstChild);
-    }
-    if (window.hljs) {
-      codeEl.innerHTML = hljs.highlight(md, { language: "markdown" }).value;
-    } else {
-      codeEl.textContent = md;
-    }
+    MdvRender.renderInto(rendered, md);
+    MdvRender.highlightInto(codeEl, md);
     split.scrollTop = 0;
-  }
-
-  // ─── YAML frontmatter (shared with app.js — keep in sync) ──────────────────
-  function stripQuotes(s) {
-    if (s.length >= 2) {
-      var a = s.charAt(0), b = s.charAt(s.length - 1);
-      if ((a === '"' && b === '"') || (a === "'" && b === "'")) return s.slice(1, -1);
-    }
-    return s;
-  }
-  function splitFrontmatter(md) {
-    var m = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(md);
-    if (!m) return { props: null, body: md };
-    return { props: parseFlatYaml(m[1]), body: md.slice(m[0].length) };
-  }
-  function parseFlatYaml(src) {
-    var lines = src.split(/\r?\n/), out = [], cur = null;
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i];
-      if (!line.trim()) continue;
-      var li = /^[ \t]*-[ \t]+(.*)$/.exec(line);
-      if (li && cur && cur.items) { cur.items.push(stripQuotes(li[1].trim())); continue; }
-      var kv = /^([^:\s][^:]*):[ \t]*(.*)$/.exec(line);
-      if (!kv) continue;
-      var key = kv[1].trim(), val = kv[2].trim();
-      if (val === "") { cur = { key: key, value: null, items: [] }; out.push(cur); continue; }
-      cur = null;
-      var inline = /^\[(.*)\]$/.exec(val);
-      if (inline) {
-        out.push({ key: key, value: null, items: inline[1].split(",").map(function (s) { return stripQuotes(s.trim()); }).filter(Boolean) });
-      } else {
-        out.push({ key: key, value: stripQuotes(val), items: null });
-      }
-    }
-    out.forEach(function (e) { if (e.items && e.items.length === 0) { e.items = null; e.value = ""; } });
-    return out;
-  }
-  function buildPropsPanel(entries) {
-    var panel = document.createElement("div");
-    panel.className = "mdv-properties";
-    var ci = 0; // running chip index -> deterministic colour variant (0..5)
-    entries.forEach(function (e) {
-      var row = document.createElement("div"); row.className = "mdv-prop";
-      var k = document.createElement("span"); k.className = "mdv-prop-key"; k.textContent = e.key;
-      var v = document.createElement("span"); v.className = "mdv-prop-val";
-      if (e.items) {
-        e.items.forEach(function (it) {
-          var chip = document.createElement("span");
-          chip.className = "mdv-prop-chip mdv-chip-" + (ci++ % 6);
-          chip.textContent = it; v.appendChild(chip);
-        });
-      } else {
-        v.textContent = e.value;
-        if (e.value === "") v.classList.add("mdv-prop-empty");
-      }
-      row.appendChild(k); row.appendChild(v); panel.appendChild(row);
-    });
-    return panel;
   }
 
   function openFile(file) {
@@ -144,20 +72,7 @@
     render(CHANGELOG, "CHANGELOG.md");
   });
 
-  // Footer build SHA is stamped in at DEPLOY time — Vercel seds the __COMMIT_SHA__
-  // tokens in web/index.html (AD-42 §6: the true build-env SHA, never the changelog's).
-  // On a local / non-deployed build the tokens survive, so show a friendly "dev" and
-  // point the link at the commit history instead of a bogus commit URL.
-  (function () {
-    var link = document.getElementById("verSha");
-    if (!link) return;
-    var code = link.querySelector("code");
-    var sha = code ? code.textContent.trim() : "";
-    if (!/^[0-9a-f]{7,40}$/.test(sha)) {
-      if (code) code.textContent = "dev";
-      link.setAttribute("href", "https://github.com/neckarshore-mmps/md-viewer/commits/main");
-    }
-  })();
+  MdvShared.initFooterSha();
 
   // ─── Drag & drop ───────────────────────────────────────────
   var dragDepth = 0;
@@ -179,8 +94,6 @@
   var THEMES = ["minimalist", "swiss"];
   var LABELS = { minimalist: "Minimalist", swiss: "Swiss Grid" };
   var modeBtn = document.getElementById("mode");
-  var modeIcon = modeBtn.querySelector(".mode-icon");
-  var modeLabel = modeBtn.querySelector(".mode-label");
 
   var menu = document.getElementById("themeMenu");
   var menuBtn = document.getElementById("themeMenuBtn");
@@ -199,24 +112,10 @@
       o.setAttribute("aria-selected", on ? "true" : "false");
     });
   }
-  function applyMode(m) {
-    if (m !== "light" && m !== "dark") m = "light";
-    root.setAttribute("data-mode", m);
-    try { localStorage.setItem("mdv-mode", m); } catch (e) {}
-    // Inline Material icons (dark_mode / light_mode) — offline, colour via currentColor.
-    var MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>';
-    var SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>';
-    modeIcon.innerHTML = m === "dark" ? MOON : SUN;
-    modeLabel.textContent = m === "dark" ? "Dark" : "Light";
-  }
   // Sync UI to the attributes the no-FOUC head script already set.
   applyTheme(root.getAttribute("data-theme") || "swiss");
-  applyMode(root.getAttribute("data-mode") || "light");
-
-  // Light/dark toggle — flip the current mode on click.
-  modeBtn.addEventListener("click", function () {
-    applyMode(root.getAttribute("data-mode") === "dark" ? "light" : "dark");
-  });
+  // Light/dark: shared with the comparison view (src/web-shared.js).
+  MdvShared.initMode(modeBtn);
 
   // Dropdown open/close + keyboard typeahead
   var typed = "";

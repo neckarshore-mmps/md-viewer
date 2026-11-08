@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
-# uninstall.sh — remove the "View Markdown" Finder Quick Action.
+# uninstall.sh — remove the Finder Quick Actions "View Markdown" and "Compare".
+# Converter results in ~/md-converter (or $MD_CONVERTER_OUT) are left alone.
 set -euo pipefail
 
-DEST_WF="$HOME/Library/Services/View Markdown.workflow"
+removed=0
+for name in "View Markdown" "Compare"; do
+  dest="$HOME/Library/Services/$name.workflow"
+  if [ -d "$dest" ]; then
+    rm -rf "$dest"
+    echo "==> Removed: $dest"
+    removed=1
+  fi
+done
 
-if [ -d "$DEST_WF" ]; then
-  rm -rf "$DEST_WF"
+if [ "$removed" -eq 1 ]; then
   /System/Library/CoreServices/pbs -flush >/dev/null 2>&1 || true
-  echo "==> Removed: $DEST_WF"
 else
-  echo "==> Nothing to remove (not installed at $DEST_WF)."
+  echo "==> Nothing to remove (no quick action installed in ~/Library/Services)."
 fi

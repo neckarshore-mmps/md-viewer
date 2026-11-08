@@ -1,0 +1,88 @@
+<nav class="bar">
+  <span id="filename">Compare</span>
+  <span class="controls">
+    <button class="btn" id="cmpOpen" type="button" title="Open a PDF and its converter results">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>Open files
+    </button>
+    <input type="file" id="cmpFiles" multiple hidden
+           accept=".pdf,.md,.markdown,.txt,application/pdf,text/markdown,text/plain">
+    <button class="btn" id="cmpSingle" type="button" aria-pressed="false" disabled
+            title="Show one result next to the PDF">1:1</button>
+    <a class="btn" id="viewer" href="/" title="Markdown viewer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>Viewer
+    </a>
+  </span>
+  <span class="nav-right">
+    <button class="btn mode" id="mode" type="button" title="Toggle light/dark" aria-label="Toggle light/dark">
+      <span class="mode-icon"></span><span class="mode-label"></span>
+    </button>
+  </span>
+</nav>
+
+<main class="stage cmp-stage">
+  <aside class="grid-rail" aria-hidden="true">
+    <span class="rail-num rail-lead">002</span>
+    <span class="rail-num">02</span>
+    <span class="rail-num">03</span>
+    <span class="rail-num">04</span>
+  </aside>
+
+  <p class="cmp-narrow" id="cmpNarrow">The comparison view needs a desktop screen at least 1024 pixels wide. Please open it on a computer.</p>
+
+  <div class="cmp" id="cmp">
+    <section class="cmp-col cmp-pdf" aria-label="Original PDF">
+      <header class="cmp-head"><span class="cmp-label">Original</span><span class="cmp-file" id="cmpPdfName">no PDF loaded</span></header>
+      <div class="cmp-body cmp-pdf-body" id="cmpPdfBody">
+        <div class="cmp-note">
+          <p>Open one PDF and the Markdown or text results of your converters, or drop them all at once.</p>
+          <p>Name each result after its tool, for example <code>report.docling.md</code> and <code>report.markitdown.md</code>. A <code>.txt</code> result is shown as plain text.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cmp-col cmp-result" data-slot="0" aria-label="Result 1">
+      <header class="cmp-head">
+        <select class="cmp-select" aria-label="Result in pane 1" disabled></select>
+        <span class="cmp-kind"></span>
+        <span class="cmp-views" role="group" aria-label="View of result 1">
+          <button type="button" class="cmp-view" data-view="rendered" aria-pressed="true">Rendered</button>
+          <button type="button" class="cmp-view" data-view="source" aria-pressed="false">Source</button>
+        </span>
+      </header>
+      <div class="cmp-body">
+        <p class="cmp-note cmp-none">No result loaded.</p>
+        <p class="cmp-note cmp-empty" hidden>No text layer, OCR not available.</p>
+        <article class="rendered cmp-rendered" hidden></article>
+        <pre class="cmp-source" hidden><code class="mdv-code language-markdown"></code></pre>
+      </div>
+    </section>
+
+    <section class="cmp-col cmp-result" data-slot="1" aria-label="Result 2">
+      <header class="cmp-head">
+        <select class="cmp-select" aria-label="Result in pane 2" disabled></select>
+        <span class="cmp-kind"></span>
+        <span class="cmp-views" role="group" aria-label="View of result 2">
+          <button type="button" class="cmp-view" data-view="rendered" aria-pressed="true">Rendered</button>
+          <button type="button" class="cmp-view" data-view="source" aria-pressed="false">Source</button>
+        </span>
+      </header>
+      <div class="cmp-body">
+        <p class="cmp-note cmp-none">No result loaded.</p>
+        <p class="cmp-note cmp-empty" hidden>No text layer, OCR not available.</p>
+        <article class="rendered cmp-rendered" hidden></article>
+        <pre class="cmp-source" hidden><code class="mdv-code language-markdown"></code></pre>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="foot" id="foot">
+  <span class="foot-hints">Original left, two results right<span class="sep">·</span>pick a result per pane<span class="sep">·</span><span class="foot-priv">nothing is uploaded. everything locally rendered.</span></span>
+  <span class="foot-ver">
+    <span class="ver-app">md-viewer</span> <span class="ver-tag">__APP_VERSION__</span>
+    <span class="sep">·</span>
+    <a class="ver-sha" id="verSha" href="https://github.com/neckarshore-mmps/md-viewer/commit/__COMMIT_SHA_FULL__" target="_blank" rel="noopener"><code>__COMMIT_SHA__</code></a>
+  </span>
+</footer>
+
+<div class="drop-overlay" id="dropOverlay"><div class="drop-inner">Drop to compare ⬇︎</div></div>

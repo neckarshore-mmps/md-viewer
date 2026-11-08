@@ -34,18 +34,33 @@ cd md-viewer
 ./install.sh
 ```
 
-`install.sh` builds `viewer.html`, copies the Quick Action into
-`~/Library/Services/`, wires in the absolute path to `bin/mdview`, validates the
-plists, and refreshes the Services cache.
+`install.sh` builds the pages, copies two Quick Actions into `~/Library/Services/`,
+wires in the absolute paths to `bin/mdview` and `bin/mdcompare`, validates the plists,
+and refreshes the Services cache. `./uninstall.sh` removes both.
 
-Then right-click any `.md` file in Finder → **Quick Actions → View Markdown**.
-If it does not appear, enable it under **System Settings → Keyboard → Keyboard
-Shortcuts → Services → Files and Folders → View Markdown**.
+| # | Quick Action | Right-click on | What it does |
+|---|--------------|----------------|--------------|
+| 1 | **Compare** | a `.pdf` | Converts the PDF with MarkItDown and Docling (only if its results are missing) and opens the comparison view with the PDF and both results already loaded |
+| 2 | **View Markdown** | a `.md` | Opens the split view: rendered left, source right |
+
+**Compare** needs the converter set up once (it brings Python via [uv](https://docs.astral.sh/uv/)):
+
+```bash
+cd converter && uv sync --extra docling
+```
+
+Results land in `~/md-converter/<doc>/` (change it with `MD_CONVERTER_OUT`); the PDF
+itself is never written. The first Docling run downloads its models (about 0.8 GB) and
+takes a minute; a notification says when it starts, a dialog says why if it fails.
+
+If an entry does not appear, enable it under **System Settings → Keyboard → Keyboard
+Shortcuts → Services → Files and Folders**.
 
 ## Usage
 
-- **From Finder:** right-click a `.md` → Quick Actions → View Markdown.
-- **From the terminal:** `bin/mdview path/to/file.md`
+- **From Finder:** right-click a `.md` → Quick Actions → View Markdown, or a `.pdf` →
+  Quick Actions → Compare.
+- **From the terminal:** `bin/mdview path/to/file.md`, `bin/mdcompare path/to/file.pdf`
 
 ## How it works
 
@@ -54,6 +69,8 @@ Shortcuts → Services → Files and Folders → View Markdown**.
 | `bin/mdview` | Base64-encodes the file contents + name (so no character can break the HTML), injects them into `viewer.html`, writes a temp file, and `open`s it. |
 | `viewer.html` | Self-contained template built by `build.sh`. Decodes the payload in-browser, renders the left pane with `marked` + `DOMPurify`, highlights the right pane with `highlight.js`. |
 | `quick-action/View Markdown.workflow` | Automator Quick Action that runs `mdview` on the selected file(s). Installed into `~/Library/Services/`. |
+| `bin/mdcompare` | Finds `uv` (a Finder service has a minimal `PATH`), runs `md-converter compare` on the PDF, and turns a failure into a dialog. |
+| `quick-action/Compare.workflow` | Automator Quick Action for PDFs that runs `mdcompare` on the selected file(s). |
 
 ## Web app
 
@@ -77,6 +94,10 @@ It shares the split view with the Finder tool and adds:
    source below).
 6. **Synced scrolling** — scrolling either pane drives the other proportionally.
 7. **Fixed footer** + drag-and-drop + paste, all fully client-side.
+8. **Compare view** at [/compare](https://md.neckarshore.ai/compare): open one PDF and the
+   Markdown or text results of your PDF converters and read them side by side. Two
+   result panes, each with a selector, so any number of tools fits; with one result
+   it is a plain PDF and Markdown view. Desktop only, and nothing is uploaded either.
 
 Fonts are self-hosted (`web/fonts/`), so the app stays offline-capable. Themes
 are web-app only — the Finder tool keeps its GitHub styling.
@@ -85,6 +106,19 @@ are web-app only — the Finder tool keeps its GitHub styling.
   `md-viewer`, root dir `web`, git-connected).
 - **DNS:** `md.neckarshore.ai` is a `CNAME` → `cname.vercel-dns.com` at the
   domain's DNS host (Hostinger), matching the existing `www` record.
+
+## PDF converter
+
+The results the compare view shows come from a separate command-line program in
+[`converter/`](https://github.com/neckarshore-mmps/md-viewer/tree/main/converter): `md-converter` turns PDFs into Markdown with
+MarkItDown and Docling, locally and free, one result per tool next to a copy of the PDF.
+The viewer itself never converts anything.
+
+`md-converter compare <pdf>` is what the **Compare** Quick Action runs: it converts if
+needed and writes a local copy of `web/compare.html` with the PDF and its results
+embedded, then opens it in the default browser. On Windows the same command works from
+the Explorer **Send to** menu; the how-to is in the
+[converter README](https://github.com/neckarshore-mmps/md-viewer/tree/main/converter#windows-send-to).
 
 ## Rebuilding after edits
 

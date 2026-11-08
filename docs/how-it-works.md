@@ -23,6 +23,7 @@ Both entry points feed the exact same in-browser rendering pipeline.
 1. Drag & drop · paste (⌘V / Ctrl+V) · file picker
 2. The repository README renders by default
 3. Nothing is uploaded — it all runs in your browser
+4. Compare at `/compare`: a PDF next to two converter results, each pane with a selector
 
 ## 2. The rendering pipeline
 

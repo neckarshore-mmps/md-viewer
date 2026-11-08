@@ -1,0 +1,125 @@
+/* compare.css: the comparison view (web/compare.html). Token-driven like the
+   viewer; loaded after web-chrome.css, web-chrome-themes.css and web-md.css.
+   Desktop only: below 1024px the grid is replaced by a note. */
+
+.cmp-stage { position: relative; }
+.cmp [hidden], .cmp-stage [hidden] { display: none !important; }
+
+/* ─── Grid: PDF + two result panes; .is-single = PDF + one pane ── */
+.cmp {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: 0;
+  min-height: 0;
+}
+.cmp.is-single { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cmp.is-single .cmp-result[data-slot="1"] { display: none; }
+
+.cmp-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: var(--bw) solid var(--line);
+}
+.cmp-col:last-child, .cmp.is-single .cmp-result[data-slot="0"] { border-right: 0; }
+
+/* ─── Pane header: label or selector, kind, view toggle ──────── */
+.cmp-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 12px;
+  background: var(--surface);
+  color: var(--sfg);
+  border-bottom: var(--bw) solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+.cmp-label { font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; }
+.cmp-file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cmp-select {
+  font: inherit;
+  min-width: 0;
+  max-width: 55%;
+  padding: 5px 8px;
+  color: var(--sfg);
+  background: var(--bg);
+  border: var(--bw) solid var(--line);
+  border-radius: 0;
+  cursor: pointer;
+}
+.cmp-select:hover, .cmp-select:focus-visible { border-color: var(--accent); }
+.cmp-kind { color: color-mix(in srgb, var(--muted) 45%, var(--fg)); white-space: nowrap; }
+.cmp-views { margin-left: auto; display: inline-flex; flex: 0 0 auto; }
+.cmp-view {
+  font: inherit;
+  padding: 5px 10px;
+  color: var(--sfg);
+  background: transparent;
+  border: var(--bw) solid var(--line);
+  cursor: pointer;
+}
+.cmp-view + .cmp-view { border-left: 0; }
+.cmp-view:hover { color: var(--accent); }
+.cmp-view[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.cmp-view:disabled { opacity: 0.4; cursor: default; }
+
+/* ─── Pane bodies: each scrolls on its own ───────────────────── */
+.cmp-body { flex: 1 1 auto; overflow: auto; min-height: 0; background: var(--bg); }
+.cmp-pdf-body { overflow: hidden; background: var(--surface); }
+.cmp-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--surface); }
+.cmp-rendered { max-width: none; padding: 24px 26px 40px; }
+.cmp-source {
+  margin: 0;
+  padding: 20px 22px;
+  min-height: 100%;
+  background: var(--surface);
+}
+.cmp-plain {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cmp-note {
+  margin: 0;
+  padding: 24px 26px;
+  max-width: 60ch;
+  color: color-mix(in srgb, var(--muted) 45%, var(--fg));
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.cmp-note p { margin: 0 0 1em; }
+.cmp-note code { color: var(--fg); }
+.cmp-empty {
+  margin: 24px 26px;
+  padding: 14px 16px;
+  color: var(--fg);
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+}
+
+/* ─── Narrow screens: a note instead of the comparison ───────── */
+.cmp-narrow { display: none; }
+@media (max-width: 1023px) {
+  .cmp { display: none; }
+  .cmp-narrow {
+    display: block;
+    margin: 0;
+    padding: 40px 24px;
+    max-width: 44ch;
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--fg);
+  }
+  #cmpOpen, #cmpSingle { display: none; }
+}

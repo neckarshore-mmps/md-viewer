@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "bash ../scripts/vercel-inject-version.sh index.html",
+  "buildCommand": "bash ../scripts/vercel-inject-version.sh index.html && bash ../scripts/vercel-inject-version.sh compare.html",
   "outputDirectory": ".",
   "cleanUrls": true,
   "headers": [

@@ -8,6 +8,27 @@ each release links the pull requests it contains.
 
 ## [Unreleased]
 
+- **Updated: [How it works](https://md.neckarshore.ai/how-it-works)** explains the comparison
+  view (how to switch, load files, name results, its limits), where the results come from
+  (md-converter) and the Finder Quick Action **Compare**, with the Windows **Send to** route
+  marked as not yet tested.
+- **New: Finder Quick Action "Compare"** for PDFs. Right-click a PDF, choose Quick Actions →
+  Compare, and the comparison view opens with the PDF and its MarkItDown and Docling results
+  already loaded; the conversion runs first if the results are missing. `./install.sh` now
+  installs it next to "View Markdown". On Windows the same works from the Explorer "Send to"
+  menu, described in the converter README (not yet tested on Windows).
+- **New: md-converter**, a separate command-line program in [`converter/`](https://github.com/neckarshore-mmps/md-viewer/tree/main/converter)
+  that turns PDFs into Markdown with MarkItDown and Docling, locally and without any paid
+  service. It writes one result per tool next to a copy of the PDF, in exactly the layout the
+  comparison view reads, and never touches the original. A scan without a text layer gives an
+  empty result; a damaged PDF or a crashing tool gives none, so a crash never looks like
+  "no text layer".
+- **New: a comparison view** at [/compare](https://md.neckarshore.ai/compare). Open a PDF
+  together with the Markdown or text results of your PDF converters and read them side by
+  side: the original on the left, two results on the right, each pane with its own selector
+  and a Rendered / Source switch. A result without any text says "No text layer, OCR not
+  available" instead of failing. Like the viewer, it runs entirely in your browser and
+  nothing is uploaded. Desktop only. ([#50](https://github.com/neckarshore-mmps/md-viewer/pull/50))
 - Scrolling one pane no longer makes the page **drift or keep scrolling by itself**.
   The rendered and raw panes now follow each other strictly one-way: the pane you are
   actually scrolling leads, and the other one just follows — so trackpad momentum can

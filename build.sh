@@ -18,6 +18,8 @@ for f in "$SRC/head.html" "$SRC/body.html" "$SRC/layout.css" "$SRC/app.js" \
          "$SRC/web-head.html" "$SRC/web-body.html" "$SRC/web-app.js" \
          "$SRC/web-fonts.css" "$SRC/web-themes.css" "$SRC/web-chrome.css" \
          "$SRC/web-chrome-themes.css" "$SRC/web-md.css" "$SRC/web-style-guide.md" \
+         "$SRC/web-theme-init.html" "$SRC/render.js" "$SRC/web-shared.js" \
+         "$SRC/compare-head.html" "$SRC/compare-body.html" "$SRC/compare.css" "$SRC/compare.js" \
          "$VENDOR/github-markdown.css" "$VENDOR/hljs-github-light.css" \
          "$VENDOR/hljs-github-dark.css" "$VENDOR/marked.min.js" \
          "$VENDOR/highlight.min.js" "$VENDOR/markdown.min.js" \
@@ -33,6 +35,22 @@ emit_libs() {
   cat "$VENDOR/highlight.min.js"; echo ''
   cat "$VENDOR/markdown.min.js"; echo ''
   echo '</script>'
+}
+
+# Shared by both web pages: the one Markdown pipeline (render.js) and the shared
+# chrome behaviour (light/dark, footer SHA). The comparison view renders through
+# the same module as the viewer, so two converter results can only differ because
+# their converters differ.
+emit_web_shared() {
+  echo '<script>'; cat "$SRC/render.js"; echo '</script>'
+  echo '<script>'; cat "$SRC/web-shared.js"; echo '</script>'
+}
+
+# Footer VERSION from CHANGELOG.md's top released entry (see emit_web for why).
+app_version() {
+  local v
+  v=$(awk '/^## v[0-9]+\.[0-9]+\.[0-9]+/ { print $2; exit }' CHANGELOG.md)
+  echo "${v:-v0.0.0}"
 }
 
 # Finder tool template — GitHub styling, base64 placeholders injected by mdview.
@@ -72,6 +90,7 @@ emit_web() {
     cat "$SRC/head.html"
     echo '<title>Markdown Viewer — rendered + source, side by side</title>'
     cat "$SRC/web-head.html"
+    cat "$SRC/web-theme-init.html"
     echo '<style>'
     echo '/* --- fonts --- */';   cat "$SRC/web-fonts.css"
     echo '/* --- themes --- */';  cat "$SRC/web-themes.css"
@@ -81,6 +100,7 @@ emit_web() {
     echo '</style>'; echo '</head>'; echo '<body>'
     cat "$SRC/web-body.html"
     emit_libs
+    emit_web_shared
     echo '<script>'; cat "$SRC/web-app.js"; echo '</script>'
     echo '<script>'; cat "$SRC/split-view.js"; echo '</script>'
     echo '</body>'; echo '</html>'
@@ -135,6 +155,40 @@ prerender_web() {
   fi
 }
 
+# Comparison view: the original PDF next to two converter results, each pane with
+# a selector over every loaded result. Same tokens, fonts and renderer as the web
+# app; its own CSP (in compare-head.html) blocks every remote load.
+emit_compare() {
+  local out="web/compare.html"
+  {
+    echo '<!doctype html>'; echo '<html lang="en">'; echo '<head>'
+    cat "$SRC/head.html"
+    echo '<title>Compare converters: PDF and Markdown side by side</title>'
+    cat "$SRC/compare-head.html"
+    cat "$SRC/web-theme-init.html"
+    echo '<style>'
+    echo '/* --- fonts --- */';   cat "$SRC/web-fonts.css"
+    echo '/* --- themes --- */';  cat "$SRC/web-themes.css"
+    echo '/* --- chrome --- */';  cat "$SRC/web-chrome.css"
+    echo '/* --- theme chrome --- */'; cat "$SRC/web-chrome-themes.css"
+    echo '/* --- markdown + highlight --- */'; cat "$SRC/web-md.css"
+    echo '/* --- compare --- */'; cat "$SRC/compare.css"
+    echo '</style>'; echo '</head>'; echo '<body>'
+    # Insertion point for `md-converter compare` (converter/src/md_converter/compare_page.py):
+    # a local copy puts its embedded files here. Unique by construction; a no-op on the web.
+    echo '<!--mdv-compare-preload-->'
+    cat "$SRC/compare-body.html"
+    emit_libs
+    emit_web_shared
+    echo '<script>'; cat "$SRC/compare.js"; echo '</script>'
+    echo '</body>'; echo '</html>'
+  } > "$out"
+  local top_ver; top_ver=$(app_version)
+  awk -v v="$top_ver" '{ gsub(/__APP_VERSION__/, v); print }' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+  echo "build.sh: wrote $out ($(wc -c < "$out" | tr -d ' ') bytes), $top_ver, SHA at deploy"
+}
+
 emit_finder
 emit_web
 prerender_web
+emit_compare

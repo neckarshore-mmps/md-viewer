@@ -37,8 +37,8 @@ jobs:
       - name: Committed build artifacts are up to date with src/
         run: |
           ./build.sh
-          git diff --exit-code -- viewer.html web/index.html \
-            || { echo "::error::viewer.html / web/index.html are stale — run ./build.sh and commit."; exit 1; }
+          git diff --exit-code -- viewer.html web/index.html web/compare.html \
+            || { echo "::error::viewer.html / web/index.html / web/compare.html are stale. Run ./build.sh and commit."; exit 1; }
 
       - name: Smoke tests (web + Finder)
         run: ./test/web-smoke.sh
@@ -116,6 +116,33 @@ jobs:
       - name: e2e + security tests
         run: npm run test:e2e
 
+  # PDF to Markdown converter (converter/, Python). Lint, types and tests, including real
+  # MarkItDown runs on the committed fixtures. Docling is an optional extra (torch plus CUDA
+  # wheels on Linux) and runs locally only (converter/heavy_tests), so this job stays light.
+  # uv comes from PyPI at an exact version: no third-party action holds the checkout here.
+  converter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: converter
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv (exact)
+        run: pipx install uv==0.13.6
+
+      - name: Install dependencies (exact, from uv.lock)
+        run: uv sync --locked
+
+      - name: Lint and format
+        run: uv run ruff check . && uv run ruff format --check .
+
+      - name: Types
+        run: uv run mypy
+
+      - name: Tests
+        run: uv run pytest
+
   # Estate stats.json producer (test-scope facet). Emits a contract-conformant stats.json on
   # every push:main, AFTER the gates. Runs even when a gate fails (if: always) so a non-green
   # run emits red:true — never a stale-green count (stats-json-contract §1).
@@ -133,7 +160,7 @@ jobs:
     # With `needs: smoke` alone, a RED e2e + green smoke emitted total:106 red:false —
     # 16 tests counted as green that never ran green. That is the exact stale-green class
     # the red flag exists to prevent, and adding playwright to the total is what opened it.
-    needs: [smoke, e2e]
+    needs: [smoke, e2e, converter]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # contents:read — this job runs npm ci and a third-party action; neither may hold a write token.
@@ -152,6 +179,11 @@ jobs:
 
       - name: Install dependencies (exact, from lockfile)
         run: npm ci
+
+      # The converter suite is counted from pytest's static collection, like playwright's
+      # --list: uv is needed here for that, and for the golden baseline below.
+      - name: Install uv (exact)
+        run: pipx install uv==0.13.6
 
       # Capture each suite's OWN reporter output separately. CI's gate prints only
       # web-smoke's ok-lines (smoke.sh + the unit tests run as suppressed rollups inside
@@ -193,6 +225,8 @@ jobs:
           ./test/web-smoke.sh               > /tmp/web-smoke.out    2>&1 || true
           npx playwright test --list        > /tmp/playwright.out   2>&1 || true
           ./test/changelog-gate.test.sh     > /tmp/changelog-gate.out 2>&1 || true
+          # converter/tests only (testpaths); heavy_tests is local-only and never collected here.
+          (cd converter && uv sync --locked -q && uv run pytest --collect-only -q) > /tmp/converter.out 2>&1 || true
 
       # Pinned to the full commit SHA of test-stats-action. Third-party actions are
       # SHA-pinned, never tag-floated. This bumps off 7a53ad0d, whose action.yml embedded a
@@ -207,13 +241,14 @@ jobs:
           sha: ${{ github.sha }}
           # Green ONLY when BOTH gates are green. See the needs: comment above — playwright's
           # --list count is result-blind, so e2e's result must reach the red flag.
-          test_result: ${{ (needs.smoke.result == 'success' && needs.e2e.result == 'success') && 'success' || 'failure' }}
+          test_result: ${{ (needs.smoke.result == 'success' && needs.e2e.result == 'success' && needs.converter.result == 'success') && 'success' || 'failure' }}
           runners: |
             unit:node:/tmp/frontmatter.out
             unit:node:/tmp/url-resolve.out
             integration:bash:/tmp/smoke.out
             e2e:bash:/tmp/web-smoke.out
             e2e:playwright:/tmp/playwright.out
+            unit:pytest:/tmp/converter.out
           # EXECUTED BUT NOT CI-GATED -> held separate, never summed into total.
           # CI runs the changelog GATE (scripts/changelog-gate.sh, in the changelog-gate job)
           # but never the test suite OF that gate. The suite is green and real, so it is not
