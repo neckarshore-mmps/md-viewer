@@ -69,7 +69,7 @@ REPO=neckarshore-mmps/md-viewer
 
 **Milestones are release milestones named by version (`v0.6.0`), assigned after the release from `CHANGELOG.md`.** md-viewer has releases but no store, so the canon's type (b) applies (retrospective, never a plan), with the version in place of a build number. None exists yet, because no release has been cut under this process.
 
-**Who merges is not decided for this repository.** The persona merge script covers Kaze, MuscleCat and their two websites only.
+**Who merges: as on Kaze and MuscleCat** (Founder decision 2026-11-08 10:21 CET, his choice „Wie Kaze und MuscleCat“, recorded on PR #49). The agent that wrote a pull request never merges it. A second agent accepts it and merges it by the persona merge script. As long as that script does not cover md-viewer (today it covers Kaze, MuscleCat and their two websites only), the Founder merges.
 
 ## What is different here
 
