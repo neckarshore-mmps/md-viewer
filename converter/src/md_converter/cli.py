@@ -1,4 +1,8 @@
-"""``md-converter convert <pdf|folder>... --out <root>`` and ``md-converter compare <pdf>``.
+"""``md-converter convert``, ``md-converter compare`` and ``md-converter verify``.
+
+``verify <pdf> --source <md>`` runs QC-PDF-01 (``md_converter.verify``): it converts the PDF
+back to Markdown with Docling (or reads ``--pdf-md``) and checks it against its source. Exit
+0 when all five checks pass, 1 when one fails or the conversion fails.
 
 ``convert`` writes the result folders. ``compare`` converts one PDF if its results are
 missing, then opens a pre-filled comparison page in the default browser; it is what the
@@ -12,6 +16,7 @@ line, for scripting), ``compare`` prints the page path; the per-tool report goes
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import webbrowser
@@ -20,8 +25,17 @@ from pathlib import Path
 
 from md_converter.compare_page import build_page, page_files, template_path, write_page
 from md_converter.contract import doc_stem, is_pdf
-from md_converter.runner import DEFAULT_TIMEOUT_S, DocOutcome, Invoke, convert_document, subprocess_invoke
+from md_converter.runner import (
+    DEFAULT_TIMEOUT_S,
+    Check,
+    DocOutcome,
+    Invoke,
+    convert_document,
+    preflight,
+    subprocess_invoke,
+)
 from md_converter.tools import TOOLS
+from md_converter.verify import CRITICAL_DEFAULT, THRESHOLD, verify_texts
 
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -66,6 +80,18 @@ def _parser() -> argparse.ArgumentParser:
     )
     compare.add_argument("--no-open", action="store_true", help="print the page path, do not open a browser")
     _common(compare)
+    verify = sub.add_parser("verify", help="QC-PDF-01: check a PDF for completeness against its source Markdown")
+    verify.add_argument("pdf", type=Path, help="the PDF to check")
+    verify.add_argument("--source", required=True, type=Path, help="the Markdown the PDF was made from")
+    verify.add_argument("--pdf-md", type=Path, default=None, help="use this conversion instead of running Docling")
+    verify.add_argument("--out", type=Path, default=None, help="output root for the conversion, default as compare")
+    verify.add_argument(
+        "--critical", default=CRITICAL_DEFAULT, help=f"critical chapter title, default '{CRITICAL_DEFAULT}'"
+    )
+    verify.add_argument("--threshold", type=float, default=THRESHOLD, help=f"minimum ratio, default {THRESHOLD}")
+    verify.add_argument("--json", action="store_true", help="print the report as JSON")
+    verify.add_argument("--force", action="store_true", help="re-run Docling even if its result exists")
+    verify.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_S, help="seconds for the conversion")
     return parser
 
 
@@ -136,15 +162,69 @@ def _run_compare(args: argparse.Namespace, invoke: Invoke, opener: Opener) -> in
     return EXIT_FAILED if failed else EXIT_OK
 
 
+def _print_report(report: dict[str, object], pdf: Path) -> None:
+    words = report["words"]
+    assert isinstance(words, dict)
+    print(f"QC-PDF-01 {pdf.name}: words {words['source']} -> {words['pdf']}")
+    checks = report["checks"]
+    assert isinstance(checks, list)
+    for c in checks:
+        mark = "PASS" if c["passed"] else "FAIL"
+        detail = f"  ({c['detail']})" if c.get("detail") else ""
+        print(f"{mark} {c['id']} {c['name']}: {c['value']}{detail}")
+    print("QC-PDF-01 PASSED" if report["passed"] else "QC-PDF-01 FAILED")
+
+
+def _run_verify(args: argparse.Namespace, invoke: Invoke, check: Check) -> int:
+    pdf: Path = args.pdf
+    if not (pdf.is_file() and is_pdf(pdf)):
+        print(f"md-converter: {pdf} is not a PDF file", file=sys.stderr)
+        return EXIT_USAGE
+    if not args.source.is_file():
+        print(f"md-converter: source {args.source} not found", file=sys.stderr)
+        return EXIT_USAGE
+    if args.pdf_md is not None:
+        if not args.pdf_md.is_file():
+            print(f"md-converter: --pdf-md {args.pdf_md} not found", file=sys.stderr)
+            return EXIT_USAGE
+        converted: Path = args.pdf_md
+    else:
+        out_root: Path = args.out or default_out_root()
+        result = convert_document(
+            pdf, out_root, ["docling"], force=args.force, timeout=args.timeout, invoke=invoke, check=check
+        )
+        if _report(pdf, result, print_paths=False) or result.folder is None:
+            return EXIT_FAILED
+        path = next((t.path for t in result.tools if t.tool == "docling" and t.path is not None), None)
+        if path is None:
+            print("md-converter: Docling wrote no result", file=sys.stderr)
+            return EXIT_FAILED
+        converted = path
+    report = verify_texts(
+        args.source.read_text(encoding="utf-8"),
+        converted.read_text(encoding="utf-8"),
+        threshold=args.threshold,
+        critical=args.critical,
+    )
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        _print_report(report, pdf)
+    return EXIT_OK if report["passed"] else EXIT_FAILED
+
+
 def main(
     argv: Sequence[str] | None = None,
     invoke: Invoke = subprocess_invoke,
     opener: Opener = webbrowser.open,
+    check: Check = preflight,
 ) -> int:
     try:
         args = _parser().parse_args(argv)
     except SystemExit as exc:
         return EXIT_OK if exc.code == 0 else EXIT_USAGE
+    if args.command == "verify":
+        return _run_verify(args, invoke, check)
     if args.command == "compare":
         return _run_compare(args, invoke, opener)
     return _run_convert(args, invoke)

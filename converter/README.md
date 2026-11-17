@@ -47,6 +47,33 @@ Open the folder's files in md.neckarshore.ai/compare.
 Exit codes: `0` all results written or skipped, `1` a document or tool failed, `2` usage error.
 Written paths go to stdout, the per-tool report to stderr.
 
+## Check a PDF against its source Markdown (QC-PDF-01)
+
+```bash
+uv run --extra docling md-converter verify ~/PDFs/profile.pdf --source ~/notes/profile.md
+```
+
+Converts the PDF back to Markdown with Docling (or reads an existing conversion given with
+`--pdf-md`) and checks whether the PDF is a complete rendering of the source. The five
+checks, each at 0.95 by default (`--threshold`):
+
+| # | Check | Passes when |
+|---|-------|-------------|
+| 1 | Words in total | PDF words / source words >= 0.95 |
+| 2 | Every chapter | every chapter of the source is present and >= 0.95 on its own |
+| 3 | Critical chapter | the chapter named by `--critical` (default "Offene Fragen") >= 0.95, even if all else passes |
+| 4 | Dates | dates and years in the PDF >= 0.95 of the source |
+| 5 | Citation markers | the same `[n]` set, every marker has a bibliography entry, no source entry lost |
+
+A chapter is a heading at the source's chapter level, the smallest heading level that
+occurs at least twice. Running headers, footers and page numbers are removed from the PDF
+side before counting. `--json` prints the full report. Exit codes: `0` all five pass, `1`
+a check fails or the conversion fails, `2` usage error.
+
+> **Note:** words are counted as written, including fenced code blocks. A source that
+> keeps structured data in code blocks (JSON or YAML records) and a PDF that renders them
+> as prose will read lower than the content says.
+
 ## Compare one PDF in one step
 
 ```bash
